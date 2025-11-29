@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Deletion Verification - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Đỏ-Cam cảnh báo */
+        .header {
+            background: linear-gradient(135deg, #ef4444 0%, #ea580c 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight {
+            color: #dc2626; /* Đỏ đậm nhấn mạnh tên user */
+            font-weight: 700;
+        }
+
+        /* Verification Code Box - Nổi bật & Sắc nét */
+        .code-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+
+        .code-label {
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .verification-code {
+            font-family: 'Courier New', monospace; /* Font monospace cho code */
+            font-size: 36px;
+            font-weight: 800;
+            color: #dc2626;
+            letter-spacing: 6px;
+            padding: 20px 40px;
+            background-color: #fef2f2; /* Nền đỏ rất nhạt */
+            border: 2px dashed #fecaca;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Expiry Info */
+        .expiry-info {
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: -20px;
+            margin-bottom: 30px;
+        }
+
+        /* Critical Warning Box - Thiết kế "nguy hiểm" */
+        .warning-box {
+            background-color: #fff1f2; /* Đỏ nhạt */
+            border-left: 4px solid #ef4444; /* Viền trái đỏ tươi */
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .warning-box h3 {
+            color: #991b1b; /* Đỏ sẫm */
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .warning-box h3::before {
+            content: "⚠️";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .warning-box ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .warning-box li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+            color: #7f1d1d;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .warning-box li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 16px;
+        }
+
+        /* Security Notice Box */
+        .security-box {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .security-box strong {
+            color: #1f2937;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong {
+            color: #1f2937;
+        }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ef4444, #f97316); /* Đỏ -> Cam */
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover {
+            color: #ef4444;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+            .verification-code { font-size: 28px; padding: 15px 20px; letter-spacing: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>⚠️ Verify Deletion</h1>
+        <p>Action Required: Permanently Delete Account</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${userName}">User</span>,
+        </div>
+
+        <!-- Main Message -->
+        <p style="margin-bottom: 20px; font-size: 16px; line-height: 1.8; color: #374151;">
+            We received a request to permanently delete your BaoNgoCV account. This is the final step. To confirm this irreversible action, please enter the verification code below:
+        </p>
+
+        <!-- Code Container -->
+        <div class="code-container">
+            <span class="code-label">Your Verification Code</span>
+            <span class="verification-code" th:text="${verificationCode}">123456</span>
+        </div>
+
+        <!-- Expiry Info -->
+        <div class="expiry-info">
+            ⏳ This code expires in <strong th:text="${expiryMinutes}">5</strong> minutes.
+        </div>
+
+        <!-- Warning Box -->
+        <div class="warning-box">
+            <h3>Critical Warning: Data Loss</h3>
+            <ul>
+                <li>Profile information and CV details will be wiped.</li>
+                <li>Job application history cannot be recovered.</li>
+                <li>All saved jobs and bookmarks will be lost.</li>
+                <li>Account settings and preferences will be reset.</li>
+            </ul>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="security-box">
+            <strong>Did Not Request This?</strong>
+            If you did not initiate this request, your account password may be compromised. Please ignore this email and <a href="#" style="color: #dc2626; text-decoration: underline;">reset your password immediately</a>.
+        </div>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Thank you for being part of our community.</p>
+            <p style="margin-top: 10px;">
+                The BaoNgoCV Team
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Privacy Policy</a> |
+            <a href="#">Terms of Service</a> |
+            <a href="#">Support Center</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

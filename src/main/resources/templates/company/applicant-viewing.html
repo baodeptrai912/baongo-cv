@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <title>Applicant Pipeline - BaoNgo ATS</title>
+
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+
+    <style>
+        /* --- INHERITED FROM REVIEW PAGE --- */
+        :root {
+            --primary-hue: 24;
+            --primary: hsl(var(--primary-hue), 90%, 48%); /* Orange */
+            --gradient-brand: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            --bg-app: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --header-height: 64px;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex; flex-direction: column; margin: 0;
+        }
+
+        /* HEADER STYLES */
+        .app-header {
+            height: var(--header-height);
+            background: var(--gradient-brand);
+            color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(234, 88, 12, 0.2);
+            z-index: 50; flex-shrink: 0;
+        }
+
+        .header-btn-ghost {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.85rem; font-weight: 600;
+            border-radius: 8px; padding: 8px 16px;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+        }
+        .header-btn-ghost:hover, .header-btn-ghost.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* LAYOUT CONTAINERS */
+        .main-wrapper { flex: 1; overflow: hidden; position: relative; }
+        .scroll-area { height: 100%; overflow-y: auto; padding: 32px 0 100px 0; }
+
+        /* TABS & CONTROLS */
+        .control-bar {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .nav-pills-custom { display: flex; gap: 4px; }
+        .nav-link-custom {
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .nav-link-custom:hover { background: #f1f5f9; color: var(--text-main); }
+        .nav-link-custom.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+        }
+
+        .badge-count { background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+        .nav-link-custom.active .badge-count { background: rgba(255,255,255,0.25); color: white; }
+
+        /* TABLE CARD STYLE */
+        .table-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+        }
+
+        .custom-table { width: 100%; border-collapse: collapse; }
+        .custom-table thead th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .custom-table tbody tr { border-bottom: 1px solid var(--border-color); transition: background 0.2s; cursor: pointer; }
+        .custom-table tbody tr:last-child { border-bottom: none; }
+        .custom-table tbody tr:hover { background: #fff7ed; }
+        .custom-table td { padding: 16px 24px; vertical-align: middle; color: var(--text-main); font-size: 0.9rem; }
+
+        /* AVATAR & STATUS */
+        .avatar-ring-mini {
+            width: 48px; height: 48px; padding: 2px; border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--primary), #fed7aa, var(--primary));
+            display: flex; justify-content: center; align-items: center; flex-shrink: 0;
+        }
+        .avatar-img-mini { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid white; background: white; }
+        .avatar-placeholder {
+            width: 100%; height: 100%; border-radius: 50%; background: white; border: 2px solid white;
+            display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--primary);
+        }
+
+        .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .status-pending { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+        .status-shortlisted { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+        .status-rejected { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .status-withdrawn { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+        /* BULK BAR */
+        .bulk-bar {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150%);
+            background: #1e293b; color: white; padding: 10px 10px 10px 24px; border-radius: 50px;
+            display: flex; align-items: center; gap: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            z-index: 100; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bulk-bar.active { transform: translateX(-50%) translateY(0); }
+        .bulk-btn {
+            background: rgba(255,255,255,0.1); color: white; border: none;
+            padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+        }
+        .bulk-btn:hover { background: rgba(255,255,255,0.2); }
+        .bulk-btn.primary-action { background: var(--primary); color: white; }
+        .bulk-btn.primary-action:hover { background: #c2410c; }
+
+        .form-check-input { width: 18px; height: 18px; border: 2px solid var(--border-color); cursor: pointer; }
+        .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+
+        .job-item-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; color: var(--text-main); text-decoration: none; border-radius: 8px; transition: all 0.2s; gap: 12px; }
+        .job-item-link:hover { background-color: #f1f5f9; color: var(--primary); }
+        .job-item-link.active { background-color: #fff7ed; color: var(--primary); font-weight: 600; }
+        .job-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
+        .job-count-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; background-color: #e2e8f0; color: #64748b; font-weight: 600; min-width: 24px; text-align: center; transition: all 0.2s; }
+        .job-item-link:hover .job-count-badge, .job-item-link.active .job-count-badge { background-color: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        /* MODAL STYLES */
+        .modal-warning-icon { width: 60px; height: 60px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1rem; }
+        .modal-confirm-title { font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; text-align: center; }
+        .modal-confirm-text { color: #64748b; font-size: 0.9rem; text-align: center; line-height: 1.6; margin-bottom: 1.5rem; }
+        .warning-box { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #c2410c; display: flex; gap: 10px; text-align: left; margin-bottom: 1.5rem; }
+        .email-modal-content { border-radius: 16px; border: none; overflow: hidden; }
+        .email-header-bg { background: var(--gradient-brand); color: white; padding: 20px 24px; }
+        .form-label-sm { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+
+        /* ===== PREMIUM EXPORT MODAL STYLES (MATCHING MY-APPLICATION) ===== */
+        .export-modal-content {
+            border: none;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+        }
+
+        .export-top-bar {
+            height: 6px;
+            background: var(--gradient-brand);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .export-top-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer { 100% { left: 100%; } }
+
+        .export-header {
+            text-align: center;
+            padding: 2.5rem 2rem 1.5rem;
+            position: relative;
+        }
+
+        .export-icon-badge {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--gradient-brand); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin: 0 auto 1.25rem;
+            box-shadow: 0 10px 30px rgba(249, 115, 22, 0.3);
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .export-title { font-size: 1.75rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+        .export-subtitle { color: #64748b; font-size: 0.95rem; margin: 0; }
+        .export-close { position: absolute; top: 1.5rem; right: 1.5rem; opacity: 0.6; transition: all 0.3s; }
+        .export-close:hover { opacity: 1; transform: rotate(90deg); }
+
+        .export-body { padding: 0 2rem 2rem; }
+        .export-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .export-option input[type="radio"] { display: none; }
+
+        .export-card {
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            padding: 2rem 1rem; border-radius: 20px; border: 3px solid #e2e8f0;
+            background: white; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .export-card-glow {
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            opacity: 0; transition: opacity 0.4s; pointer-events: none;
+        }
+
+        .export-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); border-color: #cbd5e1; }
+        .export-card:hover .export-card-icon { transform: scale(1.15) rotate(5deg); }
+
+        .export-option input:checked + .export-card { transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 50px rgba(249, 115, 22, 0.25); }
+        .export-option input:checked + .export-card .export-card-glow { opacity: 1; }
+        .export-option input:checked + .export-card .export-card-check { opacity: 1; transform: scale(1) rotate(0deg); }
+
+        .export-option input:checked + .excel-card { border-color: #217346; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
+        .excel-card .export-card-glow { background: radial-gradient(circle, rgba(33, 115, 70, 0.15), transparent); }
+        .excel-card .export-card-icon { color: #217346; }
+
+        .export-option input:checked + .csv-card { border-color: #0078d4; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+        .csv-card .export-card-glow { background: radial-gradient(circle, rgba(0, 120, 212, 0.15), transparent); }
+        .csv-card .export-card-icon { color: #0078d4; }
+
+        .export-option input:checked + .pdf-card { border-color: #d32f2f; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); }
+        .pdf-card .export-card-glow { background: radial-gradient(circle, rgba(211, 47, 47, 0.15), transparent); }
+        .pdf-card .export-card-icon { color: #d32f2f; }
+
+        .export-option input:checked + .json-card { border-color: #ff9800; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
+        .json-card .export-card-glow { background: radial-gradient(circle, rgba(255, 152, 0, 0.15), transparent); }
+        .json-card .export-card-icon { color: #ff9800; }
+
+        .export-card-icon { font-size: 3rem; margin-bottom: 1rem; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .export-card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+        .export-card-badge { display: inline-block; padding: 0.25rem 0.75rem; background: #f1f5f9; color: #64748b; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .export-card-check { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; color: #10b981; opacity: 0; transform: scale(0.5) rotate(-180deg); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+
+        .export-features { display: flex; justify-content: space-around; gap: 1rem; padding: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; margin-bottom: 0.5rem; }
+        .export-feature { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #64748b; font-weight: 500; }
+        .export-feature i { color: var(--primary); font-size: 1rem; }
+
+        .export-footer { padding: 1.5rem 2rem 2rem; display: flex; gap: 1rem; }
+        .export-btn-modal {
+            flex: 1; padding: 1rem 1.5rem; border-radius: 14px;
+            font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
+        }
+        .export-btn-cancel { background: white; color: #64748b; border: 2px solid #e2e8f0; }
+        .export-btn-cancel:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-2px); }
+        .export-btn-download { background: var(--gradient-brand); color: white; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3); }
+        .export-btn-download:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); }
+
+        .export-btn-content, .export-btn-loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: opacity 0.3s; }
+        .export-btn-loading { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; opacity: 0; pointer-events: none; }
+        .export-btn-download.loading .export-btn-content { opacity: 0; }
+        .export-btn-download.loading .export-btn-loading { opacity: 1; }
+
+        .export-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+        .export-particles span { position: absolute; width: 4px; height: 4px; background: var(--primary); border-radius: 50%; opacity: 0; animation: particle-float 4s infinite; }
+        .export-particles span:nth-child(1) { left: 20%; animation-delay: 0s; }
+        .export-particles span:nth-child(2) { left: 50%; animation-delay: 1.3s; }
+        .export-particles span:nth-child(3) { left: 80%; animation-delay: 2.6s; }
+
+        @keyframes particle-float {
+            0% { bottom: 0; opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { bottom: 100%; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 999999;"></div>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<header class="app-header">
+    <div class="d-flex align-items-center gap-4">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-layer-group fa-lg"></i>
+            <span class="fw-bold fs-5 tracking-tight">Pipeline</span>
+        </div>
+
+        <div class="dropdown">
+            <button th:if="${data != null && data.currentJob != null}"
+                    class="header-btn-ghost"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span th:text="${data.currentJob.title}">Job Title</span>
+                <i class="fas fa-chevron-down opacity-75" style="font-size: 0.7rem;"></i>
+            </button>
+
+            <ul th:if="${data != null && data.availableJobs != null}" class="dropdown-menu shadow-lg border-0 mt-2" style="min-width: 320px; max-height: 400px; overflow-y: auto; padding: 8px;">
+                <li class="px-3 py-2 text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Select a Job</li>
+                <li th:each="job : ${data.availableJobs}">
+                    <a class="dropdown-item job-item-link"
+                       th:classappend="${job.isActive} ? 'active' : ''"
+                       th:href="@{/company/job-view-applicants(jobId=${job.id})}">
+                        <span class="job-title-text" th:text="${job.title}">Frontend Developer</span>
+                        <span class="job-count-badge" th:text="${job.applicantCount != null ? job.applicantCount : 0}">12</span>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider my-2"></li>
+                <li>
+                    <a class="dropdown-item text-center fw-bold text-primary py-2 rounded-3" href="/company/jobposting-managing">View All Jobs</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <div th:if="${data != null && data.currentJob != null}" class="d-none d-md-flex align-items-center gap-3 text-white text-opacity-75 small fw-medium">
+            <span><i class="fas fa-map-marker-alt me-1"></i> <span th:text="${data.currentJob.location}">Loc</span></span>
+            <span><i class="far fa-calendar me-1"></i> <span th:text="${#temporals.format(data.currentJob.postedDate, 'dd/MM')}">Date</span></span>
+        </div>
+        <div class="vr bg-white opacity-25 mx-1"></div>
+        <div class="fw-bold"><span th:text="${#lists.size(data.candidates)}">0</span> Applicants</div>
+    </div>
+</header>
+
+<div class="main-wrapper">
+    <div class="scroll-area">
+        <div class="container">
+            <div class="control-bar">
+                <div class="nav-pills-custom">
+                    <a href="#" class="nav-link-custom" data-status="" th:classappend="${filter.status == null or filter.status.isEmpty()} ? 'active' : ''">
+                        All <span class="badge-count" id="badge-all" th:text="${data != null ? #lists.size(data.candidates) : 0}">0</span>
+                    </a>
+                    <a href="#" class="nav-link-custom" data-status="PENDING" th:classappend="${filter.status != null and filter.status.name() == 'PENDING'} ? 'active' : ''">
+                        Pending <span class="badge-count" id="badge-pending" th:text="${data != null ? (data.statusCounts['PENDING'] ?: 0) : 0}">0</span>
+                    </a>
+                    <a href="#" class="nav-link-custom" data-status="SHORTLISTED" th:classappend="${filter.status != null and filter.status.name() == 'SHORTLISTED'} ? 'active' : ''">
+                        Shortlisted <span class="badge-count" id="badge-shortlisted" th:text="${data != null ? (data.statusCounts['SHORTLISTED'] ?: 0) : 0}">0</span>
+                    </a>
+                    <a href="#" class="nav-link-custom" data-status="REJECTED" th:classappend="${filter.status != null and filter.status.name() == 'REJECTED'} ? 'active' : ''">
+                        Rejected <span class="badge-count" id="badge-rejected" th:text="${data != null ? (data.statusCounts['REJECTED'] ?: 0) : 0}">0</span>
+                    </a>
+                    <a href="#" class="nav-link-custom" data-status="WITHDRAWN" th:classappend="${filter.status != null and filter.status.name() == 'WITHDRAWN'} ? 'active' : ''">
+                        Withdrawn <span class="badge-count" id="badge-withdrawn" th:text="${data != null ? (data.statusCounts['WITHDRAWN'] ?: 0) : 0}">0</span>
+                    </a>
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button class="btn btn-sm btn-light border fw-bold text-muted" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                </div>
+            </div>
+
+            <div id="applicant-table-container">
+                <div th:if="${data == null or #lists.isEmpty(data.candidates)}" class="text-center py-5 opacity-75">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h6 class="fw-bold text-dark">No Applicants Yet</h6>
+                    <p class="small text-muted">Share your job posting to attract candidates.</p>
+                </div>
+
+                <div th:if="${data != null and not #lists.isEmpty(data.candidates)}" class="table-card">
+                    <table class="custom-table" id="applicant-table">
+                        <thead>
+                        <tr>
+                            <th style="width: 50px;" class="text-center"><input class="form-check-input" type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+                            <th>Candidate</th>
+                            <th>Date Applied</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Resume</th>
+                            <th class="text-end">Review</th>
+                        </tr>
+                        </thead>
+                        <tbody id="applicant-table-body">
+                        <tr th:each="app : ${data.candidates}" th:id="'applicant-row-' + ${app.id}"
+                            th:onclick="'window.location.href=\'/company/job-application-detail/' + ${app.id} + '\''">
+                            <td class="text-center" onclick="event.stopPropagation()">
+                                <input class="form-check-input row-check" type="checkbox" th:value="${app.id}" onclick="checkRow(this)">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-ring-mini">
+                                        <img th:if="${app.avatarUrl != null}" th:src="@{${app.avatarUrl}}" class="avatar-img-mini">
+                                        <div th:unless="${app.avatarUrl != null}" class="avatar-placeholder" th:text="${app.avatarLabel}">AB</div>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" th:text="${app.fullName}">John Doe</div>
+                                        <div class="small text-muted" th:text="${app.email}">email@example.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted fw-medium" th:text="${#temporals.format(app.appliedDate, 'MMM dd, yyyy')}">Oct 12</td>
+                            <td class="text-muted">
+                                <i class="fas fa-phone-alt fa-xs me-1" style="color: var(--primary);"></i>
+                                <span th:text="${app.phoneNumber}">0900...</span>
+                            </td>
+                            <td>
+                                <span class="status-pill"
+                                      th:classappend="' status-' + ${#strings.toLowerCase(app.status)}"
+                                      th:text="${app.status.replace('_', ' ')}">PENDING</span>
+                            </td>
+                            <td onclick="event.stopPropagation()">
+                                <a th:if="${app.resumeFile}" th:href="@{/uploads/{f}(f=${app.resumeFile})}"
+                                   class="text-decoration-none fw-bold small d-inline-flex align-items-center gap-1 px-2 py-1 rounded"
+                                   style="background: #fef2f2; color: #dc2626;" download>
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                                <span th:unless="${app.resumeFile}" class="text-muted small fst-italic">No file</span>
+                            </td>
+                            <td class="text-end"><i class="fas fa-chevron-right text-muted opacity-50"></i></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bulk-bar" id="bulkActionBar">
+    <div class="fw-bold"><span id="selectedCount" style="color: var(--primary);">0</span> Selected</div>
+    <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.2);"></div>
+    <div class="d-flex gap-2">
+        <button class="bulk-btn" onclick="openBulkInterviewModal()"><i class="far fa-calendar-check me-2"></i>Schedule Interview</button>
+        <button class="bulk-btn primary-action" onclick="prepareBulkAction('shortlist')">Shortlist</button>
+        <button class="bulk-btn" style="color: #fca5a5;" onclick="prepareBulkAction('reject')">Reject</button>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg p-3" style="border-radius: 16px;">
+            <div class="modal-body p-2">
+                <div class="modal-warning-icon" id="modalIcon"><i class="fas fa-exclamation-triangle"></i></div>
+                <h5 class="modal-confirm-title" id="modalTitle">Confirm Action</h5>
+                <p class="modal-confirm-text" id="modalText">Are you sure you want to proceed?</p>
+                <div class="warning-box">
+                    <i class="fas fa-info-circle mt-1"></i>
+                    <div><strong>Irreversible Action:</strong><br>This will affect all selected candidates.</div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-dark fw-bold py-2" id="btnConfirmAction" style="border-radius: 8px;">Yes, I Understand</button>
+                    <button type="button" class="btn btn-light fw-bold py-2 text-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="interviewModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content email-modal-content shadow-lg">
+            <div class="modal-header email-header-bg border-0">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1"><i class="far fa-calendar-alt me-2"></i>Schedule Bulk Interview</h5>
+                    <p class="m-0 small opacity-75">Configure a template to send to all selected candidates.</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="interviewForm">
+                    <div class="mb-2">
+                        <label class="form-label-sm text-primary">Email Subject</label>
+                        <input type="text" class="form-control" id="emailSubject" th:value="'Invitation to Interview - ' + (${data.currentJob != null} ? ${data.currentJob.title} : 'Job Position') + ' - [BaoNgo Corp]'">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label-sm text-primary">Email Body (Editable)</label>
+                        <textarea class="form-control" id="emailBody" rows="10" placeholder="Dear [Candidate Name]..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 px-4 pb-4">
+                <div class="me-auto text-muted small"><i class="fas fa-info-circle me-1"></i> Sending to <strong id="bulk-interview-count">0</strong> candidate(s)</div>
+                <button type="button" class="btn btn-light fw-bold text-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark fw-bold px-4 rounded-3 d-flex align-items-center gap-2" onclick="sendBulkInterviewEmail()">
+                    <span id="btnSendText">Send Invitations</span>
+                    <i class="fas fa-paper-plane small"></i>
+                    <span id="btnSendSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content export-modal-content">
+            <div class="export-top-bar"></div>
+
+            <div class="export-header">
+                <div class="export-icon-badge">
+                    <i class="fas fa-cloud-download-alt"></i>
+                </div>
+                <h4 class="export-title">Export Applicants</h4>
+                <p class="export-subtitle">Choose your preferred format to download the list</p>
+                <button type="button" class="btn-close export-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body export-body">
+                <div class="export-grid">
+                    <div class="export-option h-100">
+                        <input type="radio" name="exportFormat" value="excel" id="format-excel" checked>
+                        <label for="format-excel" class="export-card excel-card">
+                            <div class="export-card-glow"></div>
+                            <div class="export-card-icon"><i class="fas fa-file-excel"></i></div>
+                            <div class="export-card-title">Excel</div>
+                            <div class="export-card-badge">.xlsx</div>
+                            <div class="export-card-check"><i class="fas fa-check-circle"></i></div>
+                        </label>
+                    </div>
+
+                    <div class="export-option h-100">
+                        <input type="radio" name="exportFormat" value="csv" id="format-csv">
+                        <label for="format-csv" class="export-card csv-card">
+                            <div class="export-card-glow"></div>
+                            <div class="export-card-icon"><i class="fas fa-file-csv"></i></div>
+                            <div class="export-card-title">CSV</div>
+                            <div class="export-card-badge">.csv</div>
+                            <div class="export-card-check"><i class="fas fa-check-circle"></i></div>
+                        </label>
+                    </div>
+
+                    <div class="export-option h-100">
+                        <input type="radio" name="exportFormat" value="pdf" id="format-pdf">
+                        <label for="format-pdf" class="export-card pdf-card">
+                            <div class="export-card-glow"></div>
+                            <div class="export-card-icon"><i class="fas fa-file-pdf"></i></div>
+                            <div class="export-card-title">PDF</div>
+                            <div class="export-card-badge">.pdf</div>
+                            <div class="export-card-check"><i class="fas fa-check-circle"></i></div>
+                        </label>
+                    </div>
+
+                    <div class="export-option h-100">
+                        <input type="radio" name="exportFormat" value="json" id="format-json">
+                        <label for="format-json" class="export-card json-card">
+                            <div class="export-card-glow"></div>
+                            <div class="export-card-icon"><i class="fas fa-brackets-curly"></i></div>
+                            <div class="export-card-title">JSON</div>
+                            <div class="export-card-badge">.json</div>
+                            <div class="export-card-check"><i class="fas fa-check-circle"></i></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="export-features">
+                    <div class="export-feature"><i class="fas fa-bolt"></i><span>Lightning fast export</span></div>
+                    <div class="export-feature"><i class="fas fa-shield-alt"></i><span>Secure download</span></div>
+                    <div class="export-feature"><i class="fas fa-check-double"></i><span>All data included</span></div>
+                </div>
+            </div>
+
+            <div class="export-footer">
+                <button type="button" class="export-btn-modal export-btn-cancel" data-bs-dismiss="modal">
+                    <span>Cancel</span>
+                </button>
+                <button type="button" class="export-btn-modal export-btn-download" onclick="executeExport()">
+                    <span class="export-btn-content">
+                        <i class="fas fa-download"></i>
+                        <span>Download Now</span>
+                    </span>
+                    <span class="export-btn-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Preparing...</span>
+                    </span>
+                </button>
+            </div>
+
+            <div class="export-particles">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/headerAndFooter :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const initialJobId = /*[[${filter.jobId}]]*/ null;
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    function showCustomToast(type, message) {
+        if (typeof showToast === 'function') { showToast(message, type); } else { console.warn('Toast library not loaded'); alert(message); }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.nav-link-custom');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function (e) {
+                e.preventDefault();
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                fetchApplicants(initialJobId, this.dataset.status || '');
+            });
+        });
+    });
+
+    function fetchApplicants(jobId, status) {
+        if (!jobId) return;
+        const container = document.getElementById('applicant-table-container');
+        container.innerHTML = `<div class="text-center py-5"><div class="spinner-border" role="status" style="color: var(--primary);"></div></div>`;
+
+        const url = `/company/api/job-view-applicants?jobId=${jobId}` + (status ? `&status=${status}` : '');
+        setTimeout(() => {
+            fetch(url).then(r => r.json()).then(data => {
+                if (!data.candidates || data.candidates.length === 0) {
+                    container.innerHTML = `<div class="text-center py-5 opacity-75"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><h6 class="fw-bold text-dark">No Applicants Found</h6><p class="small text-muted">Try changing the filter status.</p></div>`;
+                    return;
+                }
+                renderTable(data.candidates, container);
+            });
+        }, 500);
+    }
+
+    function renderTable(candidates, container) {
+        const rows = candidates.map(app => `
+            <tr onclick="window.location.href='/company/job-application-detail/${app.id}'">
+                <td class="text-center" onclick="event.stopPropagation()"><input class="form-check-input row-check" type="checkbox" value="${app.id}" onclick="checkRow(this)"></td>
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-ring-mini">${app.avatarUrl ? `<img src="${app.avatarUrl}" class="avatar-img-mini">` : `<div class="avatar-placeholder">${app.avatarLabel || 'NA'}</div>`}</div>
+                        <div><div class="fw-bold text-dark">${app.fullName}</div><div class="small text-muted">${app.email}</div></div>
+                    </div>
+                </td>
+                <td class="text-muted fw-medium">${app.appliedDate ? new Date(app.appliedDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '-'}</td>
+                <td class="text-muted"><i class="fas fa-phone-alt fa-xs me-1" style="color: var(--primary);"></i> ${app.phoneNumber || ''}</td>
+                <td><span class="status-pill status-${(app.status || '').toLowerCase()}">${(app.status || 'UNKNOWN').replace('_', ' ')}</span></td>
+                <td onclick="event.stopPropagation()">${app.resumeFile ? `<a href="/uploads/${app.resumeFile}" class="text-decoration-none fw-bold small d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: #fef2f2; color: #dc2626;" download><i class="fas fa-file-pdf"></i> PDF</a>` : `<span class="text-muted small fst-italic">No file</span>`}</td>
+                <td class="text-end"><i class="fas fa-chevron-right text-muted opacity-50"></i></td>
+            </tr>
+        `).join('');
+
+        container.innerHTML = `<div class="table-card"><table class="custom-table"><thead><tr><th style="width: 50px;" class="text-center"><input class="form-check-input" type="checkbox" id="checkAll" onclick="toggleAll(this)"></th><th>Candidate</th><th>Date Applied</th><th>Contact</th><th>Status</th><th>Resume</th><th class="text-end">Review</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        document.getElementById('checkAll').checked = false;
+        updateBar();
+    }
+
+    function toggleAll(source) { document.querySelectorAll('.row-check').forEach(c => c.checked = source.checked); updateBar(); }
+    function checkRow(el) { updateBar(); }
+    function updateBar() {
+        const count = document.querySelectorAll('.row-check:checked').length;
+        const bar = document.getElementById('bulkActionBar');
+        document.getElementById('selectedCount').innerText = count;
+        count > 0 ? bar.classList.add('active') : bar.classList.remove('active');
+        if (count === 0) { pendingBulkAction = null; }
+        bar.querySelectorAll('button').forEach(btn => btn.disabled = (count === 0));
+    }
+
+    function submitBulk(action) {
+        const checkedBoxes = document.querySelectorAll('.row-check:checked');
+        const applicantIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        if (applicantIds.length === 0) { showCustomToast('warning', "Please select at least one applicant."); return; }
+
+        fetch(`/company/job-application/bulk-${action.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+            body: JSON.stringify({ applicantIds: applicantIds })
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || `Failed to perform bulk ${action}.`);
+                showCustomToast('success', data.message);
+                location.reload();
+            })
+            .catch(err => showCustomToast('error', 'Error: ' + err.message));
+    }
+
+    let pendingBulkAction = null;
+    function prepareBulkAction(actionType) {
+        const selectedCount = document.querySelectorAll('.row-check:checked').length;
+        if (selectedCount === 0) { showCustomToast('warning', "Please select at least one applicant."); return; }
+        pendingBulkAction = actionType;
+        const modalTitle = document.getElementById('modalTitle');
+        const modalText = document.getElementById('modalText');
+        const btnConfirm = document.getElementById('btnConfirmAction');
+        const modalIcon = document.getElementById('modalIcon');
+
+        if (actionType === 'shortlist') {
+            modalTitle.innerText = "Confirm Bulk Shortlist";
+            modalText.innerText = `Move ${selectedCount} selected candidate(s) to Shortlist?`;
+            btnConfirm.innerText = `Yes, Shortlist ${selectedCount} Candidate(s)`;
+            btnConfirm.className = "btn btn-success fw-bold py-2 w-100";
+            modalIcon.innerHTML = '<i class="fas fa-check"></i>';
+            modalIcon.style.background = '#f0fdf4'; modalIcon.style.color = '#16a34a';
+        } else {
+            modalTitle.innerText = "Confirm Bulk Rejection";
+            modalText.innerText = `Reject ${selectedCount} selected application(s)?`;
+            btnConfirm.innerText = `Yes, Reject ${selectedCount} Application(s)`;
+            btnConfirm.className = "btn btn-danger fw-bold py-2 w-100";
+            modalIcon.innerHTML = '<i class="fas fa-times"></i>';
+            modalIcon.style.background = '#fef2f2'; modalIcon.style.color = '#dc2626';
+        }
+        new bootstrap.Modal(document.getElementById('confirmationModal')).show();
+    }
+
+    document.getElementById('btnConfirmAction').addEventListener('click', function() {
+        if (pendingBulkAction) {
+            bootstrap.Modal.getInstance(document.getElementById('confirmationModal')).hide();
+            submitBulk(pendingBulkAction);
+        }
+    });
+
+    function openBulkInterviewModal() {
+        const selectedCount = document.querySelectorAll('.row-check:checked').length;
+        if (selectedCount === 0) { showCustomToast('warning', "Please select at least one applicant to schedule an interview."); return; }
+        document.getElementById('bulk-interview-count').innerText = selectedCount;
+        new bootstrap.Modal(document.getElementById('interviewModal')).show();
+    }
+
+    function sendBulkInterviewEmail() {
+        const subject = document.getElementById('emailSubject').value;
+        const content = document.getElementById('emailBody').value;
+        const applicantIds = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => parseInt(cb.value));
+
+        if (applicantIds.length === 0) { showCustomToast('warning', "No candidates selected."); return; }
+        const btnText = document.getElementById('btnSendText');
+        const btnSpinner = document.getElementById('btnSendSpinner');
+        const sendBtn = document.querySelector('#interviewModal .modal-footer button.btn-dark');
+
+        btnText.innerText = "Sending..."; btnSpinner.classList.remove('d-none'); sendBtn.disabled = true;
+
+        fetch('/company/job-application/bulk-schedule-interview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+            body: JSON.stringify({ applicantIds, subject, content })
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to send invitations.');
+                showCustomToast('success', data.message);
+                location.reload();
+            })
+            .catch(err => showCustomToast('error', 'Error: ' + err.message))
+            .finally(() => {
+                btnText.innerText = "Send Invitations"; btnSpinner.classList.add('d-none'); sendBtn.disabled = false;
+            });
+    }
+
+    // [UPDATED] EXPORT FUNCTIONALITY (MATCHING MY-APPLICATION ANIMATIONS)
+    function executeExport() {
+        const selectedFormat = document.querySelector('input[name="exportFormat"]:checked');
+        if (!selectedFormat) return;
+
+        const format = selectedFormat.value;
+        const downloadBtn = document.querySelector('#exportModal .export-btn-download');
+        const jobId = initialJobId;
+
+        if (format === 'json') {
+            showCustomToast('info', 'JSON format coming soon!');
+            return;
+        }
+
+        if (!jobId) {
+            showCustomToast('error', 'Cannot export without a selected job.');
+            return;
+        }
+
+        // Add loading state
+        downloadBtn.classList.add('loading');
+        downloadBtn.disabled = true;
+
+        setTimeout(() => {
+            const url = `/company/export/applicants?jobId=${jobId}&format=${format}`;
+            window.location.href = url;
+
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                downloadBtn.classList.remove('loading');
+                downloadBtn.disabled = false;
+                showCustomToast('success', 'Export started successfully!');
+            }, 1000);
+        }, 1200);
+    }
+</script>
+</body>
+</html>

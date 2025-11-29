@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Verify Email</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/verify-email-modern.css" rel="stylesheet"> <script src="/js/FetchNotification.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script> <script src="/js/Notification-filtering.js" defer></script>
+<style>
+    /* /css/verify-email-modern.css */
+
+    body {
+        background-color: #eef2f7; /* Nền xám xanh nhạt, hiện đại */
+
+        color: #343a40;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .verify-email-page-wrapper {
+        flex: 1; /* Đảm bảo footer dính xuống cuối trang */
+    }
+
+    .verify-email-card {
+        border-radius: 0.75rem; /* Bo góc nhiều hơn */
+    }
+    .verify-email-card .card-body {
+        /* padding: 2rem; /* Padding lớn hơn một chút */
+    }
+
+    .verify-title {
+        color: #2c3e50; /* Màu tiêu đề đậm */
+    }
+    .verify-email-card .fa-envelope-circle-check.text-primary {
+        color: orangered !important; /* Giữ màu cam cho icon chính */
+    }
+
+    .verification-code-input {
+        letter-spacing: 0.5em; /* Tạo khoảng cách giữa các ký tự mã OTP */
+        font-size: 1.5rem !important; /* Mã OTP to, rõ */
+        font-weight: 500;
+    }
+    .verification-code-input::placeholder {
+        letter-spacing: 0.5em;
+        text-align: center;
+    }
+
+
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: orangered;
+    }
+
+    .form-control:focus {
+        border-color: orangered;
+        box-shadow: 0 0 0 0.25rem rgba(255, 69, 0, 0.25);
+    }
+
+    .verify-submit-btn.btn-primary { /* Ghi đè style .btn-primary cũ nếu có */
+        background-color: orangered;
+        border-color: orangered;
+        font-weight: 500;
+        transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    }
+    .verify-submit-btn.btn-primary:hover {
+        background-color: #e04300; /* Cam đậm hơn */
+        border-color: #d43f00;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3);
+    }
+
+    .resend-container {
+        min-height: 38px; /* Đảm bảo chiều cao cố định, tránh giật layout */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .timer-display {
+        /* font-weight: 500; */
+    }
+    .resend-code-btn.btn-link {
+        color: orangered;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem; /* Thêm padding cho dễ click */
+    }
+    .resend-code-btn.btn-link:hover {
+        color: #e04300;
+        text-decoration: underline !important;
+    }
+    .resend-code-btn:disabled,
+    .resend-code-btn.disabled { /* Trường hợp disable bằng JS */
+        color: #6c757d;
+        pointer-events: none;
+        opacity: 0.65;
+    }
+
+
+    /* Admin Notifications Panel (Giữ style tương tự trang Register) */
+    .admin-notifications-panel-modern {
+        border: 1px solid #e0e4e7;
+    }
+    .admin-notifications-panel-modern .h5 i.text-primary {
+        color: orangered !important;
+    }
+    .notification-item-register {
+        border-bottom: 1px solid #f1f3f5;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+    .notification-item-register:last-child { border-bottom: none; }
+    .notification-item-register:hover { background-color: #f8f9fa; }
+    .notification-title-register { font-weight: 500; color: #343a40; }
+    .notification-title-register i.fa-fw { font-size: 0.9em; }
+    .notification-text-register { color: #6c757d; line-height: 1.5; }
+    .notification-item-register .badge.small { font-size: 0.7em; padding: 0.25em 0.45em; vertical-align: middle; }
+
+    .bg-warning-soft { background-color: rgba(255, 193, 7, 0.15) !important; }
+    .text-warning-emphasis { color: #997404 !important; }
+    .bg-success-soft { background-color: rgba(25, 135, 84, 0.1) !important; }
+    .text-success-emphasis { color: #0f5132 !important; }
+    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1) !important; }
+    .text-info-emphasis { color: #087990 !important; }
+
+</style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main class="verify-email-page-wrapper d-flex align-items-center py-5 flex-grow-1">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card verify-email-card shadow-lg border-0">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-envelope-circle-check fa-3x text-primary mb-3"></i>
+                            <h1 class="verify-title h3 fw-bold">Verify Your Email</h1>
+                            <p class="text-muted small">
+                                A verification code has been sent to
+                                <strong th:text="${userRegistrationDTO?.email ?: 'your email address'}">your.email@example.com</strong>.
+                                Please enter it below.
+                            </p>
+                        </div>
+
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show small py-2" role="alert">
+                            <i class="fas fa-times-circle me-1"></i> <span th:text="${error}"></span>
+                            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show small py-2" role="alert">
+                            <i class="fas fa-check-circle me-1"></i> <span th:text="${successMessage}"></span>
+                            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+
+                        <form th:action="@{/user/verify-email}" method="POST" class="verify-email-form-modern">
+                            <input type="hidden" id="username" name="username" th:value="${userRegistrationDTO?.username}" required>
+                            <input type="hidden" id="password" name="password" th:value="${userRegistrationDTO?.password}" required>
+                            <input type="hidden" id="email" name="email" th:value="${userRegistrationDTO?.email}" required>
+
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control form-control-lg text-center verification-code-input" id="verificationCode" name="verificationCode" placeholder="_ _ _ _ _ _" maxlength="6" required>
+                                <label for="verificationCode"><i class="fas fa-shield-halved me-2"></i>Verification Code</label>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg verify-submit-btn">
+                                    <i class="fas fa-check-circle me-2"></i>Verify Email
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-3 resend-container">
+                            <span class="timer-display small text-muted" id="timerDisplay" style="display:none;">Resend available in <span id="timer">60</span>s</span>
+                            <button type="button" class="btn btn-link text-decoration-none btn-sm resend-code-btn" id="sendAgainButton" style="display:none;">
+                                <i class="fas fa-paper-plane me-1"></i> Resend Code
+                            </button>
+                        </div>
+
+                        <div class="alert alert-info small py-2 mt-3 d-none" id="resendStatusMessage" role="alert">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg-5 d-none d-md-block ms-lg-5 mt-4 mt-md-0">
+                <div class="admin-notifications-panel-modern p-4 rounded shadow-sm bg-white sticky-top" style="top: 20px;">
+                    <h3 class="h5 mb-3 fw-semibold text-center"><i class="fas fa-bullhorn me-2 text-primary"></i>Announcements</h3>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action notification-item-register">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 notification-title-register"><i class="fas fa-tools fa-fw me-1 text-muted"></i>System Maintenance</h6>
+                                <span class="badge bg-warning-soft text-warning-emphasis rounded-pill small">New</span>
+                            </div>
+                            <p class="mb-1 small notification-text-register">Scheduled maintenance on Sep 15, 2-4 AM.</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action notification-item-register">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 notification-title-register"><i class="fas fa-cogs fa-fw me-1 text-muted"></i>New Feature Update</h6>
+                                <span class="badge bg-success-soft text-success-emphasis rounded-pill small">Update</span>
+                            </div>
+                            <p class="mb-1 small notification-text-register">Advanced job search filters now available.</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action notification-item-register">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 notification-title-register"><i class="fas fa-user-edit fa-fw me-1 text-muted"></i>Profile Completion</h6>
+                                <span class="badge bg-info-soft text-info-emphasis rounded-pill small">Reminder</span>
+                            </div>
+                            <p class="mb-1 small notification-text-register">Complete your profile for better job matches.</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}" class="mt-auto"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const csrfTokenVerify = /*[[${_csrf.token}]]*/ null; // Lấy CSRF token nếu cần cho resend
+    const csrfHeaderVerify = /*[[${_csrf.headerName}]]*/ null;
+    let initialTimeLeft = 60; // Thời gian đếm ngược ban đầu (giây)
+    let timeLeftVerify;
+    let timerIntervalVerify;
+
+    const timerDisplayEl = document.getElementById("timerDisplay");
+    const timerValueEl = document.getElementById("timer");
+    const sendAgainButtonEl = document.getElementById("sendAgainButton");
+    const resendStatusMessageEl = document.getElementById("resendStatusMessage");
+
+    // Lấy giá trị resetTimer từ Thymeleaf, nếu không có thì mặc định là false
+    const resetTimerFlag = /*[[${resetTimer ?: false}]]*/ false;
+
+    function startTimer() {
+        sendAgainButtonEl.style.display = 'none';
+        timerDisplayEl.style.display = 'inline'; // Hiển thị cụm "Resend available in..."
+        timerValueEl.textContent = timeLeftVerify;
+
+        timerIntervalVerify = setInterval(() => {
+            timeLeftVerify--;
+            timerValueEl.textContent = timeLeftVerify;
+            sessionStorage.setItem('timeLeftVerify', timeLeftVerify.toString());
+
+            if (timeLeftVerify <= 0) {
+                clearInterval(timerIntervalVerify);
+                timerDisplayEl.style.display = 'none';
+                sendAgainButtonEl.style.display = 'inline-block'; // Hiển thị nút Resend
+                sessionStorage.removeItem('timeLeftVerify');
+            }
+        }, 1000);
+    }
+
+    function resetAndStartTimer() {
+        clearInterval(timerIntervalVerify);
+        timeLeftVerify = initialTimeLeft;
+        sessionStorage.setItem('timeLeftVerify', timeLeftVerify.toString()); // Lưu lại khi reset
+        startTimer();
+    }
+
+    if (sendAgainButtonEl) {
+        sendAgainButtonEl.addEventListener('click', function () {
+            // Logic để gửi lại mã xác thực qua API (fetch request)
+            // Ví dụ:
+            const userEmail = document.getElementById("email") ? document.getElementById("email").value : null;
+            if (!userEmail) {
+                showResendStatus("Could not find email to resend code.", false);
+                return;
+            }
+
+            sendAgainButtonEl.disabled = true;
+            sendAgainButtonEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+
+            // fetch(`/user/resend-verification-code?email=${encodeURIComponent(userEmail)}`, { // Thay đổi endpoint cho phù hợp
+            //     method: 'POST', // Nên dùng POST
+            //     headers: {
+            //         // Thêm CSRF token nếu backend yêu cầu
+            //         // 'X-CSRF-TOKEN': csrfTokenVerify
+            //     }
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     if (data.success) {
+            //         showResendStatus("Verification code has been resent.", true);
+            //         resetAndStartTimer();
+            //     } else {
+            //         showResendStatus(data.message || "Failed to resend code.", false);
+            //         sendAgainButtonEl.disabled = false;
+            //         sendAgainButtonEl.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Resend Code';
+            //     }
+            // })
+            // .catch(error => {
+            //     console.error('Error resending code:', error);
+            //     showResendStatus("An error occurred. Please try again.", false);
+            //     sendAgainButtonEl.disabled = false;
+            //     sendAgainButtonEl.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Resend Code';
+            // });
+
+            //****** Bỏ comment phần fetch ở trên và điều chỉnh endpoint cho đúng ******
+            // Giả lập thành công để test UI:
+            setTimeout(() => { // Giả lập API call
+                showResendStatus("Verification code has been resent.", true);
+                resetAndStartTimer();
+                sendAgainButtonEl.disabled = false; // Bật lại nút sau khi xử lý (thường là trong .finally của fetch)
+                sendAgainButtonEl.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Resend Code';
+            }, 1000);
+        });
+    }
+
+    function showResendStatus(message, isSuccess) {
+        resendStatusMessageEl.textContent = message;
+        resendStatusMessageEl.className = 'alert small py-2 mt-3 d-block'; // Bỏ d-none
+        if (isSuccess) {
+            resendStatusMessageEl.classList.add('alert-success');
+            resendStatusMessageEl.classList.remove('alert-danger');
+        } else {
+            resendStatusMessageEl.classList.add('alert-danger');
+            resendStatusMessageEl.classList.remove('alert-success');
+        }
+        setTimeout(() => {
+            resendStatusMessageEl.classList.add('d-none'); // Tự ẩn sau vài giây
+        }, 5000);
+    }
+
+    // Khởi tạo timer khi tải trang
+    document.addEventListener('DOMContentLoaded', () => {
+        const storedTimeLeft = sessionStorage.getItem('timeLeftVerify');
+        if (resetTimerFlag) { // Nếu có cờ resetTimer từ server (Thymeleaf)
+            timeLeftVerify = initialTimeLeft;
+            sessionStorage.setItem('timeLeftVerify', timeLeftVerify.toString());
+            startTimer();
+        } else if (storedTimeLeft !== null && parseInt(storedTimeLeft, 10) > 0) {
+            timeLeftVerify = parseInt(storedTimeLeft, 10);
+            startTimer();
+        } else {
+            // Không có timer đang chạy, hiển thị nút "Send Again"
+            timerDisplayEl.style.display = 'none';
+            sendAgainButtonEl.style.display = 'inline-block';
+        }
+    });
+
+    /*]]>*/
+</script>
+</body>
+</html>

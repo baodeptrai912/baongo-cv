@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Apply for Job</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script> <script src="/js/Notification-filtering.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* ... (Giữ nguyên phần Style của bạn) ... */
+        :root {
+            --primary: #ff6b35;       /* Cam chủ đạo */
+            --primary-dark: #e85d2a;  /* Cam đậm (Hover) */
+            --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #ff9f43 100%);
+            --primary-light: #fff0e6; /* Cam phấn nhạt (Backgrounds) */
+            --accent: #ffc107;        /* Vàng nhấn */
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --bg-surface: #ffffff;
+            --bg-body: #fffbf7;
+            --border-color: #ffe0d1;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --shadow-sm: 0 2px 8px rgba(255, 107, 53, 0.08);
+            --shadow-md: 0 8px 24px rgba(255, 107, 53, 0.12);
+            --shadow-lg: 0 15px 35px rgba(255, 107, 53, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+        .main-container { max-width: 1280px; margin: 2rem auto; padding: 0 1.5rem; }
+        .job-header-card {
+            background: var(--primary-gradient); border-radius: var(--radius-xl);
+            padding: 3.5rem 3rem; color: white; position: relative; overflow: hidden;
+            box-shadow: var(--shadow-lg); margin-bottom: 2rem;
+        }
+        .job-header-card::before, .job-header-card::after {
+            content: ''; position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1);
+        }
+        .job-header-card::before { width: 300px; height: 300px; top: -100px; right: -50px; }
+        .job-header-card::after { width: 150px; height: 150px; bottom: 20px; right: 150px; }
+        .job-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.03em; text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .company-badge {
+            background: rgba(255, 255, 255, 0.95); color: var(--text-main); padding: 0.6rem 1.2rem;
+            border-radius: 50px; display: inline-flex; align-items: center; gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: var(--transition); text-decoration: none; font-weight: 600;
+        }
+        .company-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); background: white; }
+        .company-logo-header { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .content-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2.5rem; }
+        @media (max-width: 992px) { .content-grid { grid-template-columns: 1fr; } .job-header-card { padding: 2rem; } .job-title { font-size: 2rem; } }
+        .content-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+        .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px dashed var(--border-color); }
+        .section-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .section-title { font-size: 1.35rem; font-weight: 700; margin: 0; color: var(--text-main); }
+        .custom-list { list-style: none; padding: 0; margin: 0; }
+        .custom-list li { position: relative; padding-left: 2rem; margin-bottom: 0.85rem; color: var(--text-main); font-weight: 500; }
+        .custom-list li::before { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; top: 3px; color: var(--primary); font-size: 1rem; }
+        .quick-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); transition: var(--transition); position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--primary-gradient); transform: scaleX(0); transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+        .stat-card:hover::after { transform: scaleX(1); }
+        .stat-icon { color: var(--primary); font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-value { font-weight: 800; color: var(--text-main); font-size: 1.1rem; margin-top: 0.2rem; }
+        .application-wrapper { background: white; border-radius: var(--radius-xl); border: 2px solid #ffe0d1; box-shadow: 0 0 0 6px #fff0e6; overflow: hidden; }
+        .form-header { background: var(--primary-light); padding: 2rem; text-align: center; border-bottom: 1px solid var(--border-color); }
+        .form-body { padding: 2.5rem; }
+        .upload-zone { border: 2px dashed var(--primary); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; cursor: pointer; transition: var(--transition); background: #fffbf7; position: relative; }
+        .upload-zone:hover, .upload-zone.dragover { background: var(--primary-light); transform: scale(1.01); }
+        .upload-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .upload-content i { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; display: block; opacity: 0.8; }
+        .file-success { border-color: #22c55e; background: #f0fdf4; }
+        .modern-textarea { width: 100%; border: 2px solid #e2e8f0; border-radius: var(--radius-lg); padding: 1.25rem; font-family: inherit; transition: var(--transition); background: #f8fafc; }
+        .modern-textarea:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px var(--primary-light); }
+        .btn-submit-pro { background: var(--primary-gradient); color: white; width: 100%; padding: 1.1rem; border-radius: 50px; font-weight: 800; border: none; font-size: 1.15rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: var(--transition); box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4); text-transform: uppercase; letter-spacing: 1px; }
+        .btn-submit-pro:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(255, 107, 53, 0.5); filter: brightness(1.05); }
+        .btn-submit-pro:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .sidebar-sticky { position: sticky; top: 2rem; }
+        .tips-card { background: linear-gradient(180deg, #fff0e6 0%, #fff 100%); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.8rem; }
+        .tips-item { display: flex; gap: 0.8rem; margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-main); }
+        .tips-item i { color: var(--primary); margin-top: 3px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-entry { animation: slideUp 0.6s ease-out forwards; opacity: 0; }
+    </style>
+</head>
+
+<body>
+<div id="customToastContainer"></div>
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<!-- 1. Kiểm tra applyJob NULL -->
+<div th:if="${applyJob == null}" class="container py-5 text-center">
+    <div class="card border-0 shadow-sm p-5 mx-auto" style="max-width: 600px; border-radius: 24px;">
+        <div class="text-muted mb-4"><i class="fas fa-search fa-4x"></i></div>
+        <h3 class="fw-bold text-dark">Job Not Found</h3>
+        <p class="text-muted mb-4">This job posting is no longer available.</p>
+        <a th:href="@{/main/home}" class="btn btn-submit-pro w-auto px-5 py-2">Go Home</a>
+    </div>
+</div>
+
+<!-- 2. Hiển thị thông tin Job (Chỉ hiện khi applyJob != null) -->
+<div th:if="${applyJob != null}" class="main-container">
+
+    <div class="job-header-card animate-entry">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold shadow-sm">
+                        <i class="fas fa-circle text-success me-2" style="font-size: 8px;"></i>
+                        <!-- SỬA: Dùng statusDisplay hoặc status.name() -->
+                        <span th:text="${applyJob.jobPosting.statusDisplay}">OPEN</span>
+                    </span>
+                    <span class="badge bg-black bg-opacity-25 text-white rounded-pill px-3 py-2">
+                        <i class="fas fa-clock me-2"></i> Posted
+                        <!-- SỬA: Dùng createdAtFormatted -->
+                        <span th:text="${applyJob.jobPosting.createdAtFormatted}">Jan 01</span>
+                    </span>
+                </div>
+                <h1 class="job-title" th:text="${applyJob.jobPosting.title}">Senior Java Developer</h1>
+
+                <div class="mt-4">
+                    <a th:href="@{/jobseeker/company-detail/{id}(id=${applyJob.company.id})}" class="company-badge">
+                        <img th:src="${applyJob.company.companyLogo}" class="company-logo-header" alt="Logo">
+                        <span th:text="${applyJob.company.name}">Tech Company Inc.</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. SỬA LẠI PHẦN SỐ LƯỢNG ỨNG VIÊN -->
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <div class="p-4 rounded-4" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold opacity-75">APPLICANTS</span>
+                        <!-- ✅ Dùng safeReceivedCount và safeTargetHires -->
+                        <span class="fw-bold fs-5">
+                            <span th:text="${applyJob.jobPosting.safeReceivedCount}">5</span> /
+                            <span th:text="${applyJob.jobPosting.safeTargetHires}">10</span>
+                        </span>
+                    </div>
+                    <div class="progress rounded-pill" style="height: 8px; background: rgba(0,0,0,0.2);">
+                        <!-- ✅ Tính toán với biến safe để tránh lỗi -->
+                        <div class="progress-bar bg-white" role="progressbar"
+                             th:style="'width: ' + (${applyJob.jobPosting.safeReceivedCount} * 100 / ${applyJob.jobPosting.safeTargetHires}) + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="left-column">
+
+            <div class="quick-stats-grid animate-entry" style="animation-delay: 0.1s;">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-sack-dollar"></i></div>
+                    <div class="stat-label">Salary</div>
+                    <div class="stat-value text-truncate" th:text="${applyJob.jobPosting.salaryRange}">Negotiable</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-briefcase"></i></div>
+                    <div class="stat-label">Experience</div>
+                    <div class="stat-value" th:text="${applyJob.jobPosting.experience}">2+ Years</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-map-location-dot"></i></div>
+                    <div class="stat-label">Location</div>
+                    <div class="stat-value" th:text="${applyJob.jobPosting.location}">Hanoi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon text-danger"><i class="fas fa-stopwatch"></i></div>
+                    <div class="stat-label">Deadline</div>
+                    <!-- SỬA: Dùng applicationDeadlineFormatted -->
+                    <div class="stat-value" th:text="${applyJob.jobPosting.applicationDeadlineFormatted}">Feb 28</div>
+                </div>
+            </div>
+
+            <div class="content-card animate-entry" style="animation-delay: 0.2s;">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-file-lines"></i></div>
+                    <h3 class="section-title">Description</h3>
+                </div>
+                <!-- SỬA: hasDescriptions() là default method, gọi bình thường -->
+                <ul class="custom-list" th:if="${applyJob.jobPosting.hasDescriptions()}">
+                    <li th:each="desc : ${applyJob.jobPosting.descriptionsList}" th:text="${desc}"></li>
+                </ul>
+                <div th:unless="${applyJob.jobPosting.hasDescriptions()}" class="text-muted fst-italic">No description provided.</div>
+            </div>
+
+            <div class="content-card animate-entry" style="animation-delay: 0.3s;">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-list-check"></i></div>
+                    <h3 class="section-title">Requirements</h3>
+                </div>
+                <ul class="custom-list" th:if="${applyJob.jobPosting.hasRequirements()}">
+                    <li th:each="req : ${applyJob.jobPosting.requirementsList}" th:text="${req}"></li>
+                </ul>
+                <div th:unless="${applyJob.jobPosting.hasRequirements()}" class="text-muted fst-italic">No requirements specified.</div>
+            </div>
+
+            <div class="content-card animate-entry" style="animation-delay: 0.4s;">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-gift"></i></div>
+                    <h3 class="section-title">Benefits</h3>
+                </div>
+                <ul class="custom-list" th:if="${applyJob.jobPosting.hasBenefits()}">
+                    <li th:each="benefit : ${applyJob.jobPosting.benefitsList}" th:text="${benefit}"></li>
+                </ul>
+                <div th:unless="${applyJob.jobPosting.hasBenefits()}" class="text-muted fst-italic">No benefits specified.</div>
+            </div>
+
+            <div th:if="${applyJob.canShowApplicationForm()}" class="application-wrapper animate-entry" style="animation-delay: 0.5s; margin-top: 3rem;">
+                <div class="form-header">
+                    <h2 class="h3 fw-bold mb-1" style="color: var(--primary-dark)">Apply Now</h2>
+                    <p class="text-muted mb-0">Take the next step in your career</p>
+                </div>
+
+                <div class="form-body">
+                    <form th:action="@{/jobseeker/apply-job/{id}(id=${applyJob.jobPosting.id})}"
+                          method="post" enctype="multipart/form-data" id="applicationForm">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="mb-4 p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
+                            <div class="bg-white rounded-circle p-2 shadow-sm text-primary fw-bold" style="width:45px;height:45px;display:grid;place-items:center;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <!-- 4. Sửa user info: Check null trước -->
+                            <div th:if="${applyJob.user != null}">
+                                <div class="fw-bold text-dark" th:text="${applyJob.user.fullName}">User Name</div>
+                                <div class="small text-muted" th:text="${applyJob.user.email}">email@example.com</div>
+                            </div>
+                            <div th:if="${applyJob.user == null}">
+                                <div class="text-muted fst-italic">Please log in to apply</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fw-bold mb-2 d-block text-dark">Upload CV / Resume <span class="text-danger">*</span></label>
+                            <div class="upload-zone" id="dropZone">
+                                <input type="file" name="cvUpload" id="cvUpload" class="upload-input" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                                <div class="upload-content" id="uploadContent">
+                                    <i class="fas fa-cloud-arrow-up"></i>
+                                    <h6 class="fw-bold mb-1">Drag & Drop CV here</h6>
+                                    <p class="text-muted small mb-0">Supported: DOC, DOCX (Max 5MB)</p>
+                                </div>
+                                <div class="upload-content d-none" id="fileSuccess">
+                                    <i class="fas fa-circle-check text-success mb-2" style="font-size: 2.5rem;"></i>
+                                    <h6 class="fw-bold text-dark" id="fileName">filename.pdf</h6>
+                                    <p class="text-success small fw-bold mb-0">Ready to submit!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold text-dark">Cover Letter</label>
+                                <span class="badge bg-light text-secondary border" id="charCount">0 / 2000</span>
+                            </div>
+                            <textarea class="modern-textarea" name="coverLetter" id="coverLetterInput" rows="6"
+                                      placeholder="Tell us why you're the perfect fit..." maxlength="2000"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-submit-pro" id="btnApply">
+                            <span>Send Application</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div th:if="${applyJob.primaryMessage != null}" class="mt-4 alert shadow-sm"
+                 th:classappend="'alert-' + ${applyJob.primaryMessageType}">
+                <i class="fas me-2" th:classappend="${applyJob.primaryMessageType == 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                <span th:text="${applyJob.primaryMessage}"></span>
+                <div th:if="${applyJob.hasApplied && applyJob.applicationId != null}" class="mt-2">
+                    <a th:href="@{/jobseeker/my-application(highlight=${applyJob.applicationId})}" class="fw-bold text-decoration-none">
+                        View Application &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="sidebar-sticky">
+                <div class="content-card text-center animate-entry" style="animation-delay: 0.2s;">
+                    <img th:src="${applyJob.company.companyLogo}" class="rounded-circle mb-3 border p-1" style="width:90px;height:90px;object-fit:cover;">
+                    <h5 class="fw-bold mb-1" th:text="${applyJob.company.name}">Company Name</h5>
+                    <p class="text-muted small mb-3">Technology & Services</p>
+                    <a th:href="@{/jobseeker/company-detail/{id}(id=${applyJob.company.id})}" class="btn btn-outline-secondary rounded-pill btn-sm px-4 w-100">
+                        View Profile
+                    </a>
+                </div>
+
+                <div class="tips-card animate-entry" style="animation-delay: 0.4s;">
+                    <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-lightbulb text-warning me-2"></i>Application Tips</h6>
+                    <div class="tips-item">
+                        <i class="fas fa-check"></i>
+                        <span>Highlight relevant skills first.</span>
+                    </div>
+                    <div class="tips-item">
+                        <i class="fas fa-check"></i>
+                        <span>Customize your cover letter.</span>
+                    </div>
+                    <div class="tips-item">
+                        <i class="fas fa-check"></i>
+                        <span>Check PDF formatting.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Drag & Drop Logic
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('cvUpload');
+        const uploadContent = document.getElementById('uploadContent');
+        const fileSuccess = document.getElementById('fileSuccess');
+        const fileNameDisplay = document.getElementById('fileName');
+
+        if(dropZone && fileInput) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    dropZone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                fileInput.files = files;
+                handleFiles(files[0]);
+            }, false);
+
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files[0]);
+            });
+
+            function handleFiles(file) {
+                if (file) {
+                    if(file.size > 5 * 1024 * 1024) {
+                        showToast("File too large (Max 5MB)", "error");
+                        fileInput.value = '';
+                        return;
+                    }
+                    // [FIX] Add client-side validation for file type
+                    const allowedTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                    const allowedExtensions = ['.doc', '.docx'];
+                    if (!allowedTypes.includes(file.type) && !allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                        showToast("Invalid file type. Only Word documents (.doc, .docx) are allowed.", "error");
+                        fileInput.value = ''; // Clear the invalid file
+                        return;
+                    }
+                    uploadContent.classList.add('d-none');
+                    fileSuccess.classList.remove('d-none');
+                    fileNameDisplay.textContent = file.name;
+                    dropZone.classList.add('file-success');
+                }
+            }
+        }
+
+        // Char Counter
+        const coverInput = document.getElementById('coverLetterInput');
+        const charCounter = document.getElementById('charCount');
+        if(coverInput && charCounter) {
+            coverInput.addEventListener('input', function() {
+                charCounter.textContent = `${this.value.length} / 2000`;
+            });
+        }
+
+        // Form Submit
+        const form = document.getElementById('applicationForm');
+        if (form) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('btnApply');
+                const originalContent = submitBtn.innerHTML;
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                try {
+                    const formData = new FormData(form);
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', [csrfHeader]: csrfToken }
+                    });
+
+                    const api = await response.json();
+                    const result = api.data ?? api;
+
+                    if (response.ok && (api.success === true || result?.status === 'success')) {
+                        showToast(api.message || 'Application submitted!', 'success');
+                        submitBtn.innerHTML = '<i class="fas fa-check"></i> Done!';
+                        setTimeout(() => window.location.href = result?.redirectUrl ?? api.redirectUrl, 1500);
+                    } else {
+                        showToast(api.message || result?.message || 'Error submitting application', 'error');
+                        submitBtn.innerHTML = originalContent;
+                        submitBtn.disabled = false;
+                    }
+                } catch (error) {
+                    showToast('Connection error. Please try again.', 'error');
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

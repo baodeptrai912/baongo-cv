@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Upgrade Successful - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6; /* Nền xám sáng sạch */
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container: Nổi khối 3D nhẹ */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Chúc mừng (Cam rực rỡ -> Vàng) */
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f59e0b 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight {
+            color: #ea580c;
+            font-weight: 700;
+        }
+
+        /* Tier Badge Box - Thiết kế mới */
+        .tier-badge-box {
+            background: linear-gradient(to right, #fff7ed, #fff);
+            border: 2px solid #ffedd5;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Icon tên lửa trang trí */
+        .tier-badge-box::after {
+            content: "🚀";
+            font-size: 24px;
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: white;
+            padding: 0 10px;
+            border-radius: 20px;
+            border: 2px solid #ffedd5;
+        }
+
+        .tier-name {
+            display: block;
+            font-size: 24px;
+            color: #c2410c;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .tier-desc {
+            color: #9a3412;
+            font-size: 14px;
+        }
+
+        /* Upgrade Date Box - Gọn gàng hơn */
+        .upgrade-info {
+            display: flex;
+            justify-content: center;
+            background-color: #f0fdf4; /* Xanh lá rất nhạt */
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 30px;
+            color: #166534;
+            font-size: 14px;
+        }
+
+        .upgrade-info strong { margin-right: 5px; }
+
+        /* Benefits List */
+        .benefits {
+            margin: 35px 0;
+        }
+
+        .benefits h3 {
+            font-size: 16px;
+            color: #374151;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 10px;
+        }
+
+        .benefits ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .benefits li {
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+            color: #4b5563;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .benefits li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            height: 20px;
+            width: 20px;
+            background-color: #dcfce7; /* Xanh lá nền tròn */
+            color: #16a34a;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* CTA Button - Nổi bật 3D */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.25);
+            transition: transform 0.2s;
+            border-bottom: 4px solid #ea580c; /* Hiệu ứng nút bấm 3D */
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Support Box - Tinh tế */
+        .support-box {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            border: 1px dashed #d1d5db;
+        }
+
+        .support-box a {
+            color: #ea580c;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>🎉 Upgrade Successful!</h1>
+        <p>Welcome to a new level of recruiting excellence</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            <p>Hello <span class="highlight" th:text="${companyName}">Company Name</span>,</p>
+        </div>
+
+        <p style="margin-bottom: 25px; font-size: 16px; color: #374151; line-height: 1.8;">
+            Congratulations! Your account has been successfully upgraded. You are now unlocking powerful tools to reach top talent faster.
+        </p>
+
+        <!-- Tier Badge Box (Thiết kế mới) -->
+        <div class="tier-badge-box">
+            <span class="tier-name" th:text="${newTier}">PREMIUM PLAN</span>
+            <span class="tier-desc">Your account is now active at this tier</span>
+        </div>
+
+        <!-- Upgrade Date (Gọn gàng) -->
+        <div class="upgrade-info">
+            <span>📅 Active since: <strong th:text="${upgradedDate}">Jan 01, 2025</strong></span>
+        </div>
+
+        <!-- Benefits List (Checkmark xanh lá) -->
+        <div class="benefits">
+            <h3>💎 Unlocked Benefits:</h3>
+            <ul>
+                <li th:each="benefit : ${tierBenefits}" th:text="${benefit}">
+                    Unlimited job postings
+                </li>
+                <!-- Fallback demo data if list is empty -->
+                <li th:if="${tierBenefits == null || tierBenefits.isEmpty()}">Advanced Candidate Filtering</li>
+                <li th:if="${tierBenefits == null || tierBenefits.isEmpty()}">Priority Support 24/7</li>
+                <li th:if="${tierBenefits == null || tierBenefits.isEmpty()}">Company Branding Customization</li>
+            </ul>
+        </div>
+
+        <!-- CTA Button (Nổi bật) -->
+        <a th:href="${dashboardUrl}" class="cta-button">
+            📊 Go to Dashboard
+        </a>
+
+        <!-- Support Box -->
+        <div class="support-box">
+            Need help with your new features? <br>
+            Contact our <a th:href="'mailto:' + ${supportEmail}">Support Team</a> anytime.
+        </div>
+
+        <!-- Closing -->
+        <div style="margin-top: 30px; color: #4b5563; font-size: 15px;">
+            <p>Thank you for choosing <strong>BaoNgoCV</strong>.</p>
+            <p style="margin-top: 5px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar (Hình chữ nhật cam) -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${currentYear}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a th:href="${dashboardUrl}">My Dashboard</a> •
+            <a href="#">Billing History</a> •
+            <a href="#">Help Center</a>
+        </p>
+        <p style="margin-top: 15px; font-size: 11px; color: #d1d5db;">
+            You received this email because of an account upgrade. <br>
+            Please do not reply to this automated message.
+        </p>
+    </div>
+</div>
+</body>
+</html>

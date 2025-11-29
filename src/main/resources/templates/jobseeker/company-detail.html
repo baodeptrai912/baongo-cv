@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>BaoNgoCv - Company Details</title>
+
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        :root {
+            /* Cam chủ đạo */
+            --primary: #ff6b35;
+            --primary-hover: #e85d2a;
+            --primary-soft: rgba(255, 107, 53, 0.1);
+            --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+
+            /* Màu trung tính */
+            --text-dark: #1a202c;
+            --text-gray: #718096;
+            --bg-body: #f7f9fc;
+            --card-bg: #ffffff;
+
+            /* Hiệu ứng */
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(255, 107, 53, 0.15);
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        main {
+            padding: 3rem 0;
+        }
+
+        /* --- Company Header Section --- */
+        .company-header-card {
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        /* Họa tiết nền gợn sóng */
+        .company-header-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 100px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: cover;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .company-logo-box {
+            width: 140px;
+            height: 140px;
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-3deg);
+            transition: var(--transition);
+        }
+        .company-logo-box:hover {
+            transform: rotate(0) scale(1.05);
+        }
+        .company-logo-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Stats Box Glassmorphism */
+        .stat-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .stat-box:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+        }
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* --- Buttons --- */
+        .btn-follow {
+            border-radius: 50px;
+            padding: 0.6rem 2rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .btn-white-glass {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary);
+            border: none;
+        }
+        .btn-white-glass:hover {
+            background: white;
+            color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .btn-outline-glass {
+            background: transparent;
+            border: 2px solid rgba(255,255,255,0.8);
+            color: white;
+        }
+        .btn-outline-glass:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: white;
+        }
+
+        /* --- Content Cards --- */
+        .content-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0,0,0,0.03);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title i {
+            color: var(--primary);
+            background: var(--primary-soft);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        /* --- Job Listing Items --- */
+        .job-card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .job-item {
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: var(--transition);
+            background: white;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.08);
+            transform: translateY(-3px);
+        }
+
+        .job-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 4px;
+            background: var(--primary);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .job-item:hover::before {
+            opacity: 1;
+        }
+
+        .job-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        .job-item:hover .job-title {
+            color: var(--primary);
+        }
+
+        /* Tags (Pills) */
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .pill-location { background: #f0f4f8; color: #4a5568; }
+        .pill-salary { background: #fff5f2; color: #c05621; } /* Cam đậm trên nền cam nhạt */
+        .pill-exp { background: #f0fdf4; color: #2f855a; }
+
+        /* --- Contact Sidebar --- */
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .contact-item:last-child { border-bottom: none; }
+
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .contact-text {
+            font-size: 0.95rem;
+            color: var(--text-gray);
+            word-break: break-all;
+        }
+        .contact-text a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .contact-text a:hover {
+            color: var(--primary);
+        }
+
+        /* Button Show More */
+        .btn-show-more {
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            background: white;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .btn-show-more:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .company-logo-box {
+                margin: 0 auto 1rem auto;
+            }
+            .stat-box {
+                padding: 0.75rem;
+            }
+            .stat-number { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main>
+    <div class="container">
+        <!-- Error Alert -->
+        <div th:if="${response == null}" class="alert alert-warning border-0 shadow-sm text-center py-5 rounded-4">
+            <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+            <h4 class="fw-bold">Company Not Found</h4>
+            <p class="text-muted">The company you are looking for is not available or has been removed.</p>
+        </div>
+
+        <!-- Main Content -->
+        <div th:if="${response != null}">
+
+            <!-- 1. Hero Header Section -->
+            <div class="company-header-card p-4 p-lg-5">
+                <div class="row align-items-center gy-4">
+                    <!-- Logo -->
+                    <div class="col-lg-auto text-center">
+                        <div class="company-logo-box">
+                            <img th:src="${response.company.companyLogo ?: '/img/default-company-logo.png'}" alt="Company Logo">
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="col-lg">
+                        <h1 class="display-6 fw-bold mb-2" th:text="${response.company.name}">Company Name</h1>
+                        <div class="d-flex flex-wrap align-items-center gap-3 opacity-75 mb-3">
+                            <span><i class="fas fa-building me-2"></i><span th:text="${response.company.industryDisplayName}">Industry</span></span>
+                            <span><i class="fas fa-map-marker-alt me-2"></i><span th:text="${response.company.location}">Location</span></span>
+                        </div>
+
+                        <!-- Follow Button -->
+                        <!-- [FIX] Only show follow button for anonymous users or users with 'USER' role -->
+                        <div sec:authorize="!hasRole('COMPANY')">
+                            <div th:if="${response.canUserFollow()}">
+                                <button class="btn btn-follow"
+                                        id="follow-button"
+                                        th:data-company-id="${response.company.id}"
+                                        th:data-action="${response.isFollowedByCurrentUser() ? 'unfollow' : 'follow'}"
+                                        th:classappend="${response.isFollowedByCurrentUser() ? 'btn-outline-glass' : 'btn-white-glass'}"
+                                        style="min-width: 150px;">
+                                    <span th:if="${response.isFollowedByCurrentUser()}"><i class="fas fa-check me-2"></i>Following</span>
+                                    <span th:unless="${response.isFollowedByCurrentUser()}"><i class="fas fa-plus me-2"></i>Follow</span>
+                                </button>
+                            </div>
+                            <div th:unless="${response.canUserFollow()}">
+                                <a th:href="@{/user/login}" class="btn btn-white-glass btn-follow" style="min-width: 150px;">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    <span>Login to Follow</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="col-lg-5">
+                        <div class="row g-2">
+                            <div class="col-3 col-sm-3">
+                                <div class="stat-box">
+                                    <div class="stat-number" th:text="${response.company.followersCount}">0</div>
+                                    <div class="stat-label">Followers</div>
+                                </div>
+                            </div>
+                            <div class="col-3 col-sm-3">
+                                <div class="stat-box">
+                                    <div class="stat-number" th:text="${response.openJobsCount}">0</div>
+                                    <div class="stat-label">Open Jobs</div>
+                                </div>
+                            </div>
+                            <div class="col-3 col-sm-3">
+                                <div class="stat-box">
+                                    <div class="stat-number" th:text="${response.totalApplications ?: 0}">0</div>
+                                    <div class="stat-label">Applications</div>
+                                </div>
+                            </div>
+                            <div class="col-3 col-sm-3">
+                                <div class="stat-box">
+                                    <div class="stat-number"><i class="fas fa-users"></i></div>
+                                    <div class="stat-label" th:text="${response.company.companySize ?: 'N/A'}">Size</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- 2. Left Column: Description & Jobs -->
+                <div class="col-lg-8">
+
+                    <!-- About Section -->
+                    <div class="content-card">
+                        <h2 class="section-title">
+                            <i class="fas fa-info-circle"></i> About the Company
+                        </h2>
+                        <div class="text-secondary" th:utext="${response.company.description ?: '<p>No description provided yet.</p>'}"></div>
+                    </div>
+
+                    <!-- Jobs Section -->
+                    <div class="content-card"  id="job-openings-section" >
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="section-title mb-0">
+                                <i class="fas fa-briefcase"></i> Job Openings
+                            </h2>
+                            <span class="badge bg-orange-light text-orange rounded-pill"
+                                  style="background: #fff5f2; color: #ff6b35; padding: 8px 12px;">
+                                <span th:text="${response.openJobsCount}">0</span> Open Positions
+                            </span>
+                        </div>
+
+                        <div id="job-openings-container">
+                            <div th:if="${!response.hasJobs()}" class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png" alt="Empty" width="80" style="opacity: 0.5; margin-bottom: 1rem;">
+                                <h6 class="text-muted fw-bold">There are currently no job openings</h6>
+                            </div>
+
+                            <a th:each="job : ${response.jobPostingByCompany}"
+                               th:href="@{/jobseeker/job-detail/{id}(id=${job.id})}"
+                               class="job-card-link">
+                                <div class="job-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h4 class="job-title" th:text="${job.title}">Job Title</h4>
+                                        <small class="text-muted" th:if="${job.applicationDeadline}">
+                                            <i class="far fa-clock me-1"></i>
+                                            <span th:text="${#temporals.format(job.applicationDeadline, 'dd/MM')}"></span>
+                                        </small>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <span class="meta-pill pill-salary">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            <span th:text="${job.salaryRange.displayName}">Salary</span>
+                                        </span>
+                                        <span class="meta-pill pill-location">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            <span th:text="${job.location.displayName}">Location</span>
+                                        </span>
+                                        <span class="meta-pill pill-exp">
+                                            <i class="fas fa-user-clock me-1"></i>
+                                            <span th:text="${job.experience.displayName}">Experience</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="text-end">
+                                        <small class="text-muted fst-italic" style="font-size: 0.75rem;">
+                                            Posted on: <span th:text="${#temporals.format(job.postedDate, 'dd/MM/yyyy')}"></span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Right Column: Contact Info -->
+                <div class="col-lg-4">
+                    <div class="content-card position-sticky" style="top: 20px;">
+                        <h2 class="section-title">
+                            <i class="fas fa-address-book"></i> Contact Information
+                        </h2>
+
+                        <div class="vstack">
+                            <div class="contact-item" th:if="${response.company.contactEmail}">
+                                <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                                <div class="contact-text">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Email</div>
+                                    <a th:href="'mailto:' + ${response.company.contactEmail}" th:text="${response.company.contactEmail}"></a>
+                                </div>
+                            </div>
+
+                            <div class="contact-item" th:if="${response.company.contactPhone}">
+                                <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                                <div class="contact-text">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Phone</div>
+                                    <span class="fw-medium" th:text="${response.company.contactPhone}"></span>
+                                </div>
+                            </div>
+
+                            <div class="contact-item" th:if="${response.company.website}">
+                                <div class="contact-icon"><i class="fas fa-globe"></i></div>
+                                <div class="contact-text">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Website</div>
+                                    <a th:href="${response.company.website}" target="_blank" class="text-truncate d-block" style="max-width: 200px;">
+                                        <span th:text="${response.company.website}"></span> <i class="fas fa-external-link-alt ms-1 small"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<input type="hidden" id="csrfToken" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<!-- Scripts giữ nguyên logic -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script th:inline="javascript">
+    const csrfToken = document.getElementById('csrfToken')?.value;
+    const csrfHeaderName = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    // Logic Follow Button
+    const followButton = document.getElementById("follow-button");
+    if (followButton) {
+        followButton.addEventListener("click", async function() {
+            const action = this.getAttribute("data-action");
+            const companyId = this.getAttribute("data-company-id");
+            const shouldFollow = (action === "follow");
+            const url = `/jobseeker/job-following?companyId=${companyId}&follow=${shouldFollow}`;
+
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { [csrfHeaderName]: csrfToken }
+                });
+
+                if (!response.ok) throw new Error('Network error');
+
+                // Update UI Stats logic (optional implementation here)
+                const followerCountElement = document.querySelector('.stat-box .stat-number'); // Simplified selector
+                let currentCount = parseInt(followerCountElement.textContent, 10);
+
+                if (shouldFollow) {
+                    this.setAttribute("data-action", "unfollow");
+                    this.innerHTML = `<i class="fas fa-check me-2"></i>Following`;
+                    this.classList.remove('btn-white-glass');
+                    this.classList.add('btn-outline-glass');
+                    if (!isNaN(currentCount)) followerCountElement.textContent = currentCount + 1;
+                } else {
+                    this.setAttribute("data-action", "follow");
+                    this.innerHTML = `<i class="fas fa-plus me-2"></i>Follow`;
+                    this.classList.remove('btn-outline-glass');
+                    this.classList.add('btn-white-glass');
+                    if (!isNaN(currentCount) && currentCount > 0) followerCountElement.textContent = currentCount - 1;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                this.innerHTML = originalHtml;
+                alert('An error occurred. Please try again.');
+            } finally {
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Show More Jobs Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const MIN_VISIBLE_JOBS = 4; // Hiển thị 4 job đầu
+        const jobContainer = document.getElementById('job-openings-container');
+        const jobItems = jobContainer?.querySelectorAll('.job-card-link');
+
+        if (jobItems && jobItems.length > MIN_VISIBLE_JOBS) {
+            for (let i = MIN_VISIBLE_JOBS; i < jobItems.length; i++) {
+                jobItems[i].classList.add('d-none');
+            }
+
+            const btnDiv = document.createElement('div');
+            btnDiv.className = 'text-center mt-4';
+
+            const showMoreButton = document.createElement('button');
+            showMoreButton.className = 'btn btn-show-more';
+            showMoreButton.innerHTML = `View ${jobItems.length - MIN_VISIBLE_JOBS} more jobs <i class="fas fa-chevron-down ms-1"></i>`;
+
+            btnDiv.appendChild(showMoreButton);
+            jobContainer.appendChild(btnDiv);
+
+            showMoreButton.addEventListener('click', () => {
+                for (let i = MIN_VISIBLE_JOBS; i < jobItems.length; i++) {
+                    jobItems[i].classList.remove('d-none');
+                    // Thêm animation nhẹ khi hiện
+                    jobItems[i].style.animation = "fadeIn 0.5s ease";
+                }
+                btnDiv.remove();
+            });
+        }
+    });
+</script>
+</body>
+</html>

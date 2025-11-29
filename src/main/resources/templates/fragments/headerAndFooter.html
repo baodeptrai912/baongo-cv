@@ -1,0 +1,422 @@
+<div class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center d-none"
+     id="loadingOverlay" style="z-index: 1055;">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<nav th:fragment="header" class="navbar navbar-expand-lg navbar-custom-grey shadow-sm py-2">
+
+    <div id="customToastContainer"></div>
+
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/main/home">
+            <img src="/img/logo/logoShop.png" width="40" alt="Logo" class="d-inline-block align-text-top">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        Job
+                    </a>
+                    <ul class="dropdown-menu custom-dropdown" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="/jobseeker/job-search">Job searching</a></li>
+                        <li><a class="dropdown-item" href="/company/companies">Company list</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        Personal Profile/CV
+                    </a>
+                    <ul class="dropdown-menu custom-dropdown" aria-labelledby="navbarDropdown2">
+                        <li><a class="dropdown-item" href="#">Update Profile</a></li>
+                        <li><a class="dropdown-item" href="#">Create CV</a></li>
+                        <li><a class="dropdown-item" href="#">CV Supporting Service</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown3" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        Company
+                    </a>
+                    <ul class="dropdown-menu custom-dropdown" aria-labelledby="navbarDropdown3">
+                        <li><a class="dropdown-item" href="#">Job Posting</a></li>
+                        <li><a class="dropdown-item" href="#">Company Profile</a></li>
+                        <li><a class="dropdown-item" href="#">Employer Services</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- USER DROPDOWN -->
+                <li class="nav-item dropdown" sec:authorize="hasRole('ROLE_USER')">
+                    <a class="nav-link dropdown-toggle user-profile-wrapper d-flex align-items-center"
+                       href="#" id="userDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar">
+                            <!-- Nếu user có ảnh avatar thì hiện ảnh -->
+                            <img th:if="${#authentication.principal.profilePicture != null}"
+                                 th:src="@{${#authentication.principal.profilePicture}}"
+                                 alt="Avatar"
+                                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+
+
+
+
+                            <span class="user-status-dot"></span>
+                        </div>
+                        <span class="username-text" th:text="${#authentication.principal.username}">User</span>
+                    </a>
+
+                    <div class="dropdown-menu user-dropdown-modern" aria-labelledby="userDropdown">
+                        <!-- Header -->
+                        <div class="user-dropdown-header">
+
+                            <div class="user-header-info">
+                                <h6 class="mb-0" th:text="${#authentication.principal.username}">User Name</h6>
+                                <small class="text-muted">Job Seeker</small>
+                            </div>
+                            <div class="user-header-badge text-warning">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        </div>
+
+                        <!-- Menu Items -->
+                        <div class="user-dropdown-body">
+                            <a class="user-dropdown-item" th:href="@{/jobseeker/profile}">
+                                <div class="item-icon icon-profile">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">View Profile</div>
+                                    <small class="item-subtitle">Manage your profile</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/jobseeker/job-save}">
+                                <div class="item-icon icon-saved">
+                                    <i class="fas fa-bookmark"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Saved Jobs</div>
+                                    <small class="item-subtitle">Your favorite positions</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/jobseeker/my-application}">
+                                <div class="item-icon icon-history">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Application History</div>
+                                    <small class="item-subtitle">Track your applications</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/jobseeker/account-settings}">
+                                <div class="item-icon icon-settings">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Account Settings</div>
+                                    <small class="item-subtitle">Privacy & security</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="user-dropdown-footer">
+                            <form action="#" th:action="@{/logout-action}" method="post" class="w-100">
+                                <button type="submit" class="btn-logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- COMPANY DROPDOWN -->
+                <li class="nav-item dropdown" sec:authorize="hasRole('ROLE_COMPANY')">
+                    <a class="nav-link dropdown-toggle user-profile-wrapper d-flex align-items-center"
+                       href="#" id="companyDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar" style="border-radius: 8px; overflow: hidden;">
+                            <!-- ✨ [FIX] Show company logo if available -->
+                            <img th:if="${#authentication.principal.companyLogo != null and !#strings.isEmpty(#authentication.principal.companyLogo)}"
+                                 th:src="@{${#authentication.principal.companyLogo}}"
+                                 alt="Logo"
+                                 style="width: 100%; height: 100%;">
+                            <!-- Fallback icon -->
+                            <i th:if="${#authentication.principal.companyLogo == null or #strings.isEmpty(#authentication.principal.companyLogo)}"
+                               class="fas fa-building"></i>
+
+                            <span class="user-status-dot"></span>
+                        </div>
+                        <span class="username-text" th:text="${#authentication.principal.username}">Company</span>
+                    </a>
+
+                    <div class="dropdown-menu user-dropdown-modern" aria-labelledby="companyDropdown">
+                        <!-- Header -->
+                        <div class="user-dropdown-header company-header">
+                            <div class="user-header-info">
+                                <h6 class="mb-0" th:text="${#authentication.principal.username}">Company</h6>
+                                <small>Employer Account</small>
+                            </div>
+                            <div class="user-header-badge">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                        </div>
+
+                        <!-- Menu Items -->
+                        <div class="user-dropdown-body">
+                            <a class="user-dropdown-item" th:href="@{/company/profile}">
+                                <div class="item-icon icon-company">
+                                    <i class="fas fa-id-badge"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Company Profile</div>
+                                    <small class="item-subtitle">Manage company info</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/company/post-a-job}">
+                                <div class="item-icon icon-post">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Post a Job</div>
+                                    <small class="item-subtitle">Create new posting</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/company/jobposting-managing}">
+                                <div class="item-icon icon-manage">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Manage Job Listings</div>
+                                    <small class="item-subtitle">Edit your postings</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+                            <a class="user-dropdown-item" th:href="@{/company/transaction-history}">
+                                <div class="item-icon icon-history">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Transaction History</div>
+                                    <small class="item-subtitle">View your payments</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+
+
+
+                            <a class="user-dropdown-item" th:href="@{/company/account-settings}">
+                                <div class="item-icon icon-settings">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <div class="item-content">
+                                    <div class="item-title">Account Settings</div>
+                                    <small class="item-subtitle">Security & preferences</small>
+                                </div>
+                                <i class="fas fa-chevron-right item-arrow"></i>
+                            </a>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="user-dropdown-footer">
+                            <form action="#" th:action="@{/logout-action}" method="post" class="w-100">
+                                <button type="submit" class="btn-logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+
+
+                <li class="nav-item dropdown position-relative" sec:authorize="isAuthenticated()">
+                    <a class="nav-link position-relative notification-bell-wrapper" href="javascript:void(0);" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="notification-bell-icon">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-pulse"></span>
+                        </div>
+                        <span class="notification-badge" style="display: none;">0</span>
+                    </a>
+
+                    <!-- XÓA dropdown-menu-end và thêm custom positioning -->
+                    <div class="dropdown-menu notification-dropdown-modern"
+                         aria-labelledby="notificationDropdown">
+
+                        <!-- Header -->
+                        <div class="notification-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="notification-header-icon">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">Notifications</h6>
+                                        <small class="text-muted notification-count-text">You have <span
+                                                id="unread-count">0</span> unread</small>
+                                    </div>
+                                </div>
+                                <button class="btn-mark-read" id="markAllReadBtn" title="Mark all as read">
+                                    <i class="fas fa-check-double"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="notification-tabs">
+                            <button class="notification-tab active" data-tab="all">
+                                <i class="fas fa-inbox me-1"></i>All
+                            </button>
+                            <button class="notification-tab" data-tab="unread">
+                                <i class="fas fa-envelope me-1"></i>Unread
+                            </button>
+                            <button class="notification-tab" data-tab="read">
+                                <i class="fas fa-envelope-open me-1"></i>Read
+                            </button>
+                        </div>
+
+                        <!-- Notifications Container -->
+                        <div id="notification-items-container" class="notification-items-container">
+                            <!-- Empty State -->
+                            <div id="no-notifications-placeholder" class="notification-empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-bell-slash"></i>
+                                </div>
+                                <h6 class="mb-2">No Notifications</h6>
+                                <p class="text-muted mb-0">You're all caught up! Check back later.</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="notification-footer">
+                            <a href="/notification/all" class="btn-view-all">
+                                <i class="fas fa-list-ul me-2"></i>View All Notifications
+                                <i class="fas fa-arrow-right ms-auto"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+
+
+                <li class="nav-item dropdown" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link dropdown-toggle" href="#" id="authDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false"
+                       data-bs-offset="-170,8"> <i class="fas fa-user-circle me-1" style="font-size: 1.2rem;"></i>
+                        Account
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-start custom-dropdown auth-dropdown-hover-left"
+                        aria-labelledby="authDropdown">
+                        <li><a class="dropdown-item"
+                               th:href="@{/user/login}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a></li>
+                        <li><a class="dropdown-item" th:href="@{/user/register}"><i class="fas fa-user-plus me-2"></i>Register</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- Footer -->
+<footer th:fragment="footer" class="bg-dark text-light text-center text-lg-start mt-auto">
+    <div class="container p-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="mb-3">BaoNgoCv</h5>
+                <p>&copy; 2024 All rights reserved.</p>
+                <!-- [IMPROVEMENT] Disabled footer links as they are not yet implemented -->
+                <ul class="list-unstyled">
+                    <li><a href="#" onclick="event.preventDefault()" class="text-light text-decoration-none footerLink disabled">About Us</a></li>
+                    <li><a href="#" onclick="event.preventDefault()" class="text-light text-decoration-none footerLink disabled">Services</a></li>
+                    <li><a href="#" onclick="event.preventDefault()" class="text-light text-decoration-none footerLink disabled">FAQ</a></li>
+                    <li><a href="#" onclick="event.preventDefault()" class="text-light text-decoration-none footerLink disabled">Privacy Policy</a></li>
+                    <li><a href="#" onclick="event.preventDefault()" class="text-light text-decoration-none footerLink disabled">Terms of Use</a></li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5 class="mb-3">Contact Us</h5>
+                <p><i class="bi bi-geo-alt"></i> 101 Vong Ha Street, Ha Noi City, Viet Nam</p>
+                <p><i class="bi bi-telephone"></i> +84 0902091204 </p>
+                <p><i class="bi bi-envelope"></i> baoNgoCvSupport@gmail.com</p>
+                <div>
+                    <!-- [IMPROVEMENT] Disabled social links -->
+                    <a href="#" onclick="event.preventDefault()" class="text-light me-3 disabled"><i class="bi bi-facebook"></i></a>
+                    <a href="#" onclick="event.preventDefault()" class="text-light me-3 disabled"><i class="bi bi-twitter"></i></a>
+                    <a href="#" onclick="event.preventDefault()" class="text-light disabled"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!--slider -->
+<div th:fragment="slider" id="carouselExample" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="/img/slider/1.png" class="d-block w-100" alt="slider image">
+        </div>
+        <div class="carousel-item">
+            <img src="/img/slider/2.png" class="d-block w-100" alt="slider image">
+        </div>
+        <div class="carousel-item">
+            <img src="/img/slider/3.png" class="d-block w-100" alt="slider image">
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+<!-- Confirm Modal -->
+<div th:fragment="confirmModal" id="confirmModal" class="modal fade" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="confirmModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    <span id="modalTitle">Confirmation</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0" id="modalMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmBtn">
+                    <i class="fas fa-check me-1"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

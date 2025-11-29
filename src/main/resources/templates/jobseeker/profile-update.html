@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.springframework.org/tags/security" lang="en">
+
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>BaoNgoCv - Edit Profile</title>
+
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/DeleteModal.js" defer></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        /* --- CSS GIỮ NGUYÊN NHƯ CŨ --- */
+        :root { --primary-color: #ff4500; --primary-hover: #e03e00; --bg-body: #f0f2f5; --card-bg: #ffffff; --text-main: #2d3748; --text-muted: #718096; --border-radius: 16px; --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05); --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        body {
+            background-color: var(--bg-body); color: var(--text-main); font-family: 'Poppins', sans-serif;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        .settings-sidebar { position: sticky; top: 20px; }
+        .nav-card { background: var(--card-bg); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: none; overflow: hidden; }
+        .btn-nav-section { display: flex; align-items: center; width: 100%; padding: 1rem 1.5rem; text-align: left; background: transparent; border: none; color: var(--text-muted); font-weight: 500; transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .btn-nav-section:hover { background-color: #f7fafc; color: var(--primary-color); }
+        .btn-nav-section.active { background-color: #fff5f2; color: var(--primary-color); border-left-color: var(--primary-color); }
+        .btn-nav-section i { width: 24px; margin-right: 10px; }
+        .profile-section-modern.card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            min-height: 70vh; /* Set a minimum height */
+        }
+        .card-header { background-color: #fff; border-bottom: 1px solid #edf2f7; padding: 1.5rem; }
+        .section-title-modern { font-weight: 700; color: var(--text-main); font-size: 1.25rem; }
+        .profile-cover { height: 160px; background: linear-gradient(120deg, #ff6b6b, #ff8e53); position: relative; }
+        .avatar-upload-wrapper { position: relative; margin-top: -75px; margin-bottom: 1rem; display: inline-block; }
+        .profile-avatar-preview { width: 150px !important; height: 150px !important; object-fit: cover !important; border: 5px solid #fff; background-color: #fff; box-shadow: var(--shadow-md); border-radius: 50% !important; transition: transform 0.3s ease; }
+        .profile-avatar-preview:hover { transform: scale(1.02); }
+        .btn-change-photo { position: absolute; bottom: 5px; right: 5px; background: var(--primary-color); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; cursor: pointer; transition: all 0.2s; }
+        .btn-change-photo:hover { background: var(--primary-hover); transform: scale(1.1); }
+        .stats-container { background-color: #fff; border-radius: 12px; border: 1px solid #edf2f7; padding: 1.5rem; margin-bottom: 2rem; }
+        .stat-item { padding: 0.5rem; }
+        .stat-value { color: var(--primary-color); font-weight: 700; font-size: 1.5rem; }
+        .stat-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600; }
+        .form-label { font-weight: 500; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem; }
+        .form-control, .form-select { border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 1rem; background-color: #fbfbfb; transition: all 0.2s; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.15); background-color: #fff; }
+        .btn-save-profile { background: var(--primary-color); color: white; border: none; padding: 0.8rem 3rem; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3); }
+        .btn-save-profile:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); }
+        .dynamic-item.card { border: 1px solid #edf2f7; border-radius: 12px; margin-bottom: 1rem; transition: all 0.3s ease; box-shadow: none; }
+        .dynamic-item.card:hover { border-color: #cbd5e0; box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+        .section-badge { background: #edf2f7; color: var(--text-main); font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; }
+        .btn-nav-section.active .section-badge { background: rgba(255, 69, 0, 0.15); color: var(--primary-color); }
+        .current-badge, .graduated-badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+        .empty-state { padding: 3rem; text-align: center; background: #f8fafc; border-radius: 12px; border: 2px dashed #e2e8f0; }
+        .item-entering { animation: fadeInUp 0.5s ease-out forwards; }
+        .item-leaving { transition: all 0.4s ease; opacity: 0; transform: translateX(20px); max-height: 0; margin: 0 !important; padding: 0 !important; overflow: hidden; }
+        .item-highlighted-for-wipe { background-image: linear-gradient(to right, rgba(255,165,0,.1) 50%, transparent 50%); background-size: 200% 100%; background-position: 0% 0%; transition: background-position 1.2s ease-in-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .settings-sidebar { position: static; margin-bottom: 1.5rem; } .profile-cover { height: 100px; } .avatar-upload-wrapper { margin-top: -50px; } .profile-avatar-preview { width: 100px !important; height: 100px !important; } }
+    </style>
+</head>
+
+<body>
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main class="edit-profile-page py-5" style="flex-grow: 1;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div class="settings-sidebar">
+                    <div class="nav-card d-flex flex-column">
+                        <div class="p-3 border-bottom text-center bg-white"><h6 class="mb-0 fw-bold text-uppercase text-muted small ls-1">Settings</h6></div>
+                        <div class="btn-group-vertical w-100" role="group">
+                            <button type="button" class="btn btn-nav-section active" onclick="showSection('personalInfo', this)">
+                                <i class="fas fa-user-circle"></i> Personal Info
+                            </button>
+                            <button type="button" class="btn btn-nav-section" onclick="showSection('educationSectionId', this)">
+                                <i class="fas fa-graduation-cap"></i> Education
+                                <span class="section-badge ms-auto" id="educationBadge" th:text="${#lists.size(profileData.educations())}">0</span>
+                            </button>
+                            <button type="button" class="btn btn-nav-section" onclick="showSection('experienceSectionId', this)">
+                                <i class="fas fa-briefcase"></i> Experience
+                                <span class="section-badge ms-auto" id="experienceBadge" th:text="${#lists.size(profileData.jobExperiences())}">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card mt-3 border-0 shadow-sm d-none d-lg-block">
+                        <div class="card-body text-center">
+                            <small class="text-muted">Profile Status</small>
+                            <div class="mt-2">
+                                <span class="profile-completion-badge" id="completionBadge" th:classappend="${profileData.basicProfileResponse().hasCompleteProfile()} ? 'badge-complete' : 'badge-incomplete'">
+                                    <i class="fas" th:classappend="${profileData.basicProfileResponse().hasCompleteProfile()} ? 'fa-check-circle' : 'fa-clock'"></i>
+                                    <span th:text="${profileData.basicProfileResponse().hasCompleteProfile()} ? 'Complete' : 'Incomplete'">Status</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <section class="profile-section-modern card" id="personalInfo">
+                    <div class="profile-cover"></div>
+                    <div class="card-body px-4 pb-4 pt-0">
+                        <div class="text-center mb-4">
+                            <div class="avatar-upload-wrapper">
+                                <img th:src="${profileData.basicProfileResponse().profilePicture() ?: '/img/default-avatar.png'}" alt="Avatar" id="profileImagePreview" class="profile-avatar-preview rounded-circle">
+                                <label for="avatarUpload" class="btn-change-photo shadow-sm" title="Change Avatar"><i class="fas fa-camera"></i></label>
+                            </div>
+                            <h3 class="fw-bold mb-1" th:text="${profileData.basicProfileResponse().fullName()}">User Name</h3>
+                            <p class="text-muted mb-0"><i class="fas fa-map-marker-alt me-1"></i> <span th:text="${profileData.basicProfileResponse().address() ?: 'Location not set'}">Location</span></p>
+                        </div>
+
+                        <div class="stats-container">
+                            <div class="row text-center">
+                                <div class="col-3 stat-item border-end"><div class="stat-value" id="ageDisplay" th:text="${profileData.basicProfileResponse().getAge()} ?: '--'">--</div><div class="stat-label">Years Old</div></div>
+                                <div class="col-3 stat-item border-end"><div class="stat-value" th:text="${profileData.basicProfileResponse().getMemberSince()}">Jan 24</div><div class="stat-label">Joined</div></div>
+                                <div class="col-3 stat-item border-end"><div class="stat-value" id="educationCount" th:text="${#lists.size(profileData.educations())}">0</div><div class="stat-label">Education</div></div>
+                                <div class="col-3 stat-item"><div class="stat-value" id="experienceCount" th:text="${#lists.size(profileData.jobExperiences())}">0</div><div class="stat-label">Experience</div></div>
+                            </div>
+                        </div>
+
+                        <form id="personalInfoForm" enctype="multipart/form-data">
+                            <input type="file" id="avatarUpload" name="avatar" class="d-none" accept="image/*" onchange="previewAvatar(this)">
+                            <div class="row g-4">
+                                <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" id="fullName" name="fullName" class="form-control" th:value="${profileData.basicProfileResponse().fullName()}" required><div class="invalid-feedback"></div></div>
+                                <div class="col-md-6"><label class="form-label">Email</label><input type="email" id="email" name="email" class="form-control bg-light" th:value="${profileData.basicProfileResponse().email()}" readonly></div>
+                                <div class="col-md-6"><label class="form-label">Phone</label><input type="text" id="phone" name="phone" class="form-control" th:value="${profileData.basicProfileResponse().phoneNumber()}"><div class="invalid-feedback"></div></div>
+                                <div class="col-md-6"><label class="form-label">Location</label><input type="text" id="location" name="location" class="form-control" th:value="${profileData.basicProfileResponse().address()}"></div>
+                                <div class="col-md-6"><label class="form-label">Date of Birth</label><input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" th:value="${profileData.basicProfileResponse().dateOfBirth()}"></div>
+                                <div class="col-md-6"><label class="form-label">Nationality</label><input type="text" id="nationality" name="nationality" class="form-control" th:value="${profileData.basicProfileResponse().nationality()}"></div>
+                                <div class="col-md-6"><label class="form-label">Gender</label>
+                                    <select id="gender" name="gender" class="form-select">
+                                        <option value="" disabled>Select...</option>
+                                        <option value="MALE" th:selected="${profileData.basicProfileResponse().gender() == 'MALE'}">Male</option>
+                                        <option value="FEMALE" th:selected="${profileData.basicProfileResponse().gender() == 'FEMALE'}">Female</option>
+                                        <option value="OTHER" th:selected="${profileData.basicProfileResponse().gender() == 'OTHER'}">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center mt-5"><button type="button" class="btn btn-save-profile" onclick="updatePersonalInfo()"><i class="fas fa-save me-2"></i>Save Changes</button></div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="profile-section-modern card" id="educationSectionId" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pb-0">
+                        <h2 class="section-title-modern mb-0"><i class="fas fa-user-graduate me-2 text-primary"></i>Education <span class="badge bg-light text-dark ms-2" id="educationHeaderBadge" th:text="${#lists.size(profileData.educations())}">0</span></h2>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addEducationModal"><i class="fas fa-plus me-1"></i> Add New</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="eduListContainer" class="dynamic-list-container">
+                            <div th:if="${#lists.isEmpty(profileData.educations())}" id="eduEmptyMessage" class="empty-state"><i class="fas fa-graduation-cap"></i><h6 class="fw-bold mt-3">No Education Added</h6><p class="text-muted small">Highlight your academic journey.</p></div>
+                            <div th:each="education : ${profileData.educations()}" class="dynamic-item card mb-3 education-item-display" th:data-id="${education.id()}">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1"><h5 class="h6 mb-0 fw-bold me-2" th:text="${education.degree()}">Degree</h5><span th:if="${education.isCurrentEducation()}" class="current-badge badge bg-success bg-opacity-10 text-success">Current</span></div>
+                                            <p class="text-dark mb-1 fw-medium"><i class="fas fa-university fa-xs me-1 text-muted"></i> <span th:text="${education.institution()}">Institution</span></p>
+                                            <p class="text-muted small mb-0"><i class="fas fa-calendar-alt fa-xs me-1"></i> <span th:text="${#temporals.format(education.startDate(), 'MMM yyyy')}">Start</span> - <span th:text="${education.endDate() != null ? #temporals.format(education.endDate(), 'MMM yyyy') : 'Present'}">End</span></p>
+                                        </div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v text-muted"></i></button>
+                                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                                <li>
+                                                    <button class="dropdown-item"
+                                                            type="button"
+                                                            th:onclick="openEditModal(
+                                                                [[${education.id()}]],
+                                                                [[${education.degree()}]],
+                                                                [[${education.institution()}]],
+                                                                [[${education.startDate}]],
+                                                                [[${education.endDate}]],
+                                                                [[${education.notes()}]]
+                                                            )">
+                                                        <i class="fas fa-edit me-2 text-primary"></i> Edit
+                                                    </button>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><button class="dropdown-item text-danger btn-delete-item" th:attr="onclick=|deleteEducation(${education.id()})|"><i class="fas fa-trash-alt me-2"></i> Delete</button></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div th:if="${education.notes()}" class="mt-2 pt-2 border-top border-light"><small class="text-muted fst-italic"><i class="fas fa-sticky-note fa-xs me-1"></i><span th:text="${education.notes()}"></span></small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-section-modern card" id="experienceSectionId" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pb-0">
+                        <h2 class="section-title-modern mb-0"><i class="fas fa-briefcase me-2 text-primary"></i>Experience <span class="badge bg-light text-dark ms-2" id="experienceHeaderBadge" th:text="${#lists.size(profileData.jobExperiences())}">0</span></h2>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addExperienceModal"><i class="fas fa-plus me-1"></i> Add New</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="jobExListContainer" class="dynamic-list-container">
+                            <div th:if="${#lists.isEmpty(profileData.jobExperiences())}" id="jobExEmptyMessage" class="empty-state"><i class="fas fa-briefcase"></i><h6 class="fw-bold mt-3">No Experience Yet</h6><p class="text-muted small">Add your past roles.</p></div>
+                            <div th:each="jobExp : ${profileData.jobExperiences()}" class="dynamic-item card mb-3 job-experience-item-display" th:data-id="${jobExp.id()}">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1"><h5 class="h6 mb-0 fw-bold me-2" th:text="${jobExp.jobTitle()}">Title</h5><span th:if="${jobExp.isCurrentJob()}" class="current-badge badge bg-success bg-opacity-10 text-success"><i class="fas fa-briefcase fa-xs me-1"></i> Current</span></div>
+                                            <p class="text-dark mb-1 fw-medium"><i class="fas fa-building fa-xs me-1 text-muted"></i> <span th:text="${jobExp.companyName()}">Company</span></p>
+                                            <div class="d-flex text-muted small mb-2"><span class="me-3"><i class="fas fa-clock fa-xs me-1"></i> <span th:text="${jobExp.getDuration()}">Duration</span></span><span><i class="fas fa-calendar-alt fa-xs me-1"></i> <span th:text="${#temporals.format(jobExp.startDate(), 'MMM yyyy')}">Start</span> - <span th:text="${jobExp.endDate() != null ? #temporals.format(jobExp.endDate(), 'MMM yyyy') : 'Present'}">End</span></span></div>
+                                        </div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v text-muted"></i></button>
+                                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                                <li>
+                                                    <button class="dropdown-item btn-edit-item"
+                                                            type="button"
+                                                            th:onclick="openEditJobModal(
+                                                                [[${jobExp.id()}]],
+                                                                [[${jobExp.jobTitle()}]],
+                                                                [[${jobExp.companyName()}]],
+                                                                [[${jobExp.startDate}]],
+                                                                [[${jobExp.endDate}]],
+                                                                [[${jobExp.description()}]]
+                                                            )">
+                                                        <i class="fas fa-edit me-2 text-primary"></i> Edit
+                                                    </button>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><button class="dropdown-item text-danger btn-delete-item" th:attr="onclick=|deleteJobEx(${jobExp.id()})|"><i class="fas fa-trash-alt me-2"></i> Delete</button></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div th:if="${jobExp.description()}" class="bg-light rounded p-2 mt-2"><small class="text-muted" th:text="${jobExp.description()}"></small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <div class="modal fade" id="addEducationModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;"><form id="educationForm"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold">Add Education</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body pt-4"><div class="row g-3"><div class="col-md-6"><label class="form-label">Degree</label><select id="addDegree" name="degree" class="form-select" required><option value="" disabled selected>Select Degree</option><option value="Bachelor">Bachelor's Degree</option><option value="Master">Master's Degree</option><option value="Doctorate">Doctorate (PhD)</option><option value="Certificate">Certificate</option><option value="High School Diploma">High School Diploma</option><option value="Other">Other</option></select></div><div class="col-md-6"><label class="form-label">Institution</label><input type="text" id="addInstitution" name="institution" class="form-control" required></div><div class="col-md-6"><label class="form-label">Start Date</label><input type="date" id="addEducationStartDate" name="educationStartDate" class="form-control" required></div><div class="col-md-6"><label class="form-label">End Date</label><input type="date" id="addEducationEndDate" name="educationEndDate" class="form-control" required></div><div class="col-12"><label class="form-label">Notes</label><textarea name="educationDetail" id="addEducationDetail" class="form-control" rows="3"></textarea></div></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary rounded-pill px-4">Add Education</button></div></form></div></div></div>
+<div class="modal fade" id="editEducationModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold">Edit Education</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body pt-4"><input type="hidden" id="editEducationId"><div class="row g-3"><div class="col-md-6"><label class="form-label">Degree</label><select id="editDegreeInput" name="degree" class="form-select" required><option value="Bachelor">Bachelor's Degree</option><option value="Master">Master's Degree</option><option value="Doctorate">Doctorate (PhD)</option><option value="Certificate">Certificate</option><option value="High School Diploma">High School Diploma</option><option value="Other">Other</option></select></div><div class="col-md-6"><label class="form-label">Institution</label><input type="text" class="form-control" id="editInstitutionInput" required></div><div class="col-md-6"><label class="form-label">Start Date</label><input type="date" class="form-control" id="editStartDateInput" required></div><div class="col-md-6"><label class="form-label">End Date</label><input type="date" class="form-control" id="editEndDateInput"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" id="eduIsCurrentCheckboxEdit"><label class="form-check-label small" for="eduIsCurrentCheckboxEdit">I currently study here</label></div></div><div class="col-12"><label class="form-label">Notes</label><textarea class="form-control" id="editDetailsInput" rows="3"></textarea></div></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveEducationChanges()">Save Changes</button></div></div></div></div>
+<div class="modal fade" id="addExperienceModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;"><form id="jobExperienceForm"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold">Add Experience</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body pt-4"><div class="row g-3"><div class="col-md-6"><label class="form-label">Job Title</label><input type="text" id="addJobTitle" name="jobTitle" class="form-control" required></div><div class="col-md-6"><label class="form-label">Company</label><input type="text" id="addCompanyName" name="companyName" class="form-control" required></div><div class="col-md-6"><label class="form-label">Start Date</label><input type="date" id="addJobStartDate" name="startDate" class="form-control" required></div><div class="col-md-6"><label class="form-label">End Date</label><input type="date" id="addJobEndDate" name="endDate" class="form-control"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" id="jobIsCurrentCheckbox"><label class="form-check-label small" for="jobIsCurrentCheckbox">I currently work here</label></div></div><div class="col-12"><label class="form-label">Description</label><textarea id="addJobDetail" name="jobDetail" class="form-control" rows="4" required></textarea></div></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary rounded-pill px-4">Add Experience</button></div></form></div></div></div>
+<div class="modal fade" id="editJobModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold">Edit Experience</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body pt-4"><input type="hidden" id="editJobId"><div class="row g-3"><div class="col-md-6"><label class="form-label">Job Title</label><input type="text" class="form-control" id="editJobTitle" required></div><div class="col-md-6"><label class="form-label">Company</label><input type="text" class="form-control" id="editCompanyName" required></div><div class="col-md-6"><label class="form-label">Start Date</label><input type="date" class="form-control" id="editStartDate" required></div><div class="col-md-6"><label class="form-label">End Date</label><input type="date" class="form-control" id="editEndDate"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" id="jobIsCurrentCheckboxEdit"><label class="form-check-label small" for="jobIsCurrentCheckboxEdit">I currently work here</label></div></div><div class="col-12"><label class="form-label">Description</label><textarea class="form-control" id="editDescription" rows="4" required></textarea></div></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveJobExperienceChanges()">Save Changes</button></div></div></div></div>
+
+    </div>
+</main>
+
+<div id="customToastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+<div class="mt-auto" th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    const csrfTokenProfile = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeaderProfile = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    // --- 1. HELPER FUNCTIONS ---
+    function createFetchHeaders() {
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        if (csrfHeaderProfile && csrfTokenProfile) headers.append(csrfHeaderProfile, csrfTokenProfile);
+        return headers;
+    }
+
+    function formatDateForDisplay(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long' };
+            return date.toLocaleDateString('en-US', { ...options, timeZone: 'UTC' });
+        } catch (error) { return dateString; }
+    }
+
+    function showToast(msg, type) {
+        if(window.Toast) window.Toast.fire({icon: type, title: msg});
+        else alert(msg);
+    }
+
+    function updateSectionBadges() {
+        document.getElementById('educationBadge').textContent = document.querySelectorAll('.education-item-display').length;
+        document.getElementById('educationHeaderBadge').textContent = document.querySelectorAll('.education-item-display').length;
+        document.getElementById('experienceBadge').textContent = document.querySelectorAll('.job-experience-item-display').length;
+        document.getElementById('experienceHeaderBadge').textContent = document.querySelectorAll('.job-experience-item-display').length;
+        document.getElementById('educationCount').textContent = document.querySelectorAll('.education-item-display').length;
+        document.getElementById('experienceCount').textContent = document.querySelectorAll('.job-experience-item-display').length;
+    }
+
+    function applyHighlightEffect(element) {
+        if (!element) return;
+        element.classList.add('item-highlighted-for-wipe');
+        setTimeout(() => element.classList.remove('item-highlighted-for-wipe'), 1200);
+    }
+
+    function showSection(sectionIdToShow, clickedButton) {
+        ['personalInfo', 'educationSectionId', 'experienceSectionId'].forEach(id => {
+            document.getElementById(id).style.display = (id === sectionIdToShow) ? 'block' : 'none';
+        });
+        document.querySelectorAll('.btn-nav-section').forEach(btn => btn.classList.remove('active'));
+        if (clickedButton) clickedButton.classList.add('active');
+    }
+
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) { document.getElementById('profileImagePreview').setAttribute('src', e.target.result); }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // --- 2. LOGIC XỬ LÝ (CRUD) ---
+
+    // Update Personal Info
+    function updatePersonalInfo() {
+        const form = document.getElementById('personalInfoForm');
+        const formData = new FormData(form);
+        fetch('/jobseeker/personal-infor-update', {
+            method: 'POST',
+            headers: new Headers({ [csrfHeaderProfile]: csrfTokenProfile }),
+            body: formData
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast(res.message, 'success');
+                if (res.data && res.data.profileImageUrl) {
+                    document.getElementById('profileImagePreview').src = res.data.profileImageUrl;
+                }
+            } else {
+                showToast(res.message || 'Update failed', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Update error:', error);
+            showToast('A network error occurred. Please try again.', 'error');
+        });
+    }
+
+    // EDUCATION Functions
+    function addEducationToDOM(newEdu) {
+        const container = document.getElementById('eduListContainer');
+        const emptyMsg = document.getElementById('eduEmptyMessage');
+        if (emptyMsg) emptyMsg.style.display = 'none';
+
+        const newItem = document.createElement('div');
+        newItem.className = 'dynamic-item card mb-3 education-item-display item-entering';
+        newItem.setAttribute('data-id', newEdu.id);
+
+        const escapedNotes = (newEdu.notes || '').replace(/'/g, "\\'");
+        newItem.innerHTML = getEducationHtml(newEdu, escapedNotes);
+        container.appendChild(newItem);
+        updateSectionBadges();
+    }
+
+    function getEducationHtml(edu, escapedNotes) {
+        const endDateDisplay = edu.endDate ? formatDateForDisplay(edu.endDate) : 'Present';
+        const isCurrent = !edu.endDate;
+        const notes = edu.notes || '';
+        const institution = edu.institution || edu.schoolName || '';
+
+        return `
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1"><h5 class="h6 mb-0 fw-bold me-2">${edu.degree}</h5>${isCurrent ? '<span class="current-badge badge bg-success bg-opacity-10 text-success">Current</span>' : ''}</div>
+                        <p class="text-dark mb-1 fw-medium"><i class="fas fa-university fa-xs me-1 text-muted"></i> ${institution}</p>
+                        <p class="text-muted small mb-0"><i class="fas fa-calendar-alt fa-xs me-1"></i> ${formatDateForDisplay(edu.startDate)} - ${endDateDisplay}</p>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v text-muted"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                            <li><button class="dropdown-item" type="button" onclick="openEditModal(${edu.id},'${edu.degree}','${institution}','${edu.startDate}','${edu.endDate || ''}','${escapedNotes}')"><i class="fas fa-edit me-2 text-primary"></i> Edit</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger btn-delete-item" onclick="deleteEducation(${edu.id})"><i class="fas fa-trash-alt me-2"></i> Delete</button></li>
+                        </ul>
+                    </div>
+                </div>
+                ${notes ? `<div class="mt-2 pt-2 border-top border-light"><small class="text-muted fst-italic"><i class="fas fa-sticky-note fa-xs me-1"></i>${notes}</small></div>` : ''}
+            </div>`;
+    }
+
+    function openEditModal(id, degree, institution, startDate, endDate, notes) {
+        document.getElementById('editEducationId').value = id;
+        document.getElementById('editDegreeInput').value = degree;
+        document.getElementById('editInstitutionInput').value = institution;
+        document.getElementById('editStartDateInput').value = startDate;
+        document.getElementById('editDetailsInput').value = notes || '';
+
+        const endDateInput = document.getElementById('editEndDateInput');
+        const isCurrentCheckbox = document.getElementById('eduIsCurrentCheckboxEdit');
+
+        const isCurrent = !endDate || endDate === 'null';
+        isCurrentCheckbox.checked = isCurrent;
+        endDateInput.disabled = isCurrent;
+        endDateInput.value = isCurrent ? '' : endDate;
+
+        const modal = new bootstrap.Modal(document.getElementById('editEducationModal'));
+        modal.show();
+    }
+
+    function deleteEducation(id) {
+        DeleteModal.show('Delete Education', () => {
+            fetch(`/jobseeker/education/${id}`, { method: 'DELETE', headers: createFetchHeaders() })
+                .then(r => r.json()).then(res => {
+                if (res.success) {
+                    const item = document.querySelector(`.education-item-display[data-id="${id}"]`);
+                    if (item) {
+                        item.classList.add('item-leaving');
+                        setTimeout(() => { item.remove(); updateSectionBadges(); }, 400);
+                        showToast('Education deleted.', 'success');
+                    }
+                } else showToast('Failed to delete.', 'error');
+            });
+        });
+    }
+
+    function saveEducationChanges() {
+        const id = document.getElementById('editEducationId').value;
+        const data = {
+            degree: document.getElementById('editDegreeInput').value,
+            institution: document.getElementById('editInstitutionInput').value,
+            startDate: document.getElementById('editStartDateInput').value,
+            endDate: document.getElementById('editEndDateInput').value || null,
+            notes: document.getElementById('editDetailsInput').value
+        };
+        fetch(`/jobseeker/education/${id}`, { method: 'PUT', headers: createFetchHeaders(), body: JSON.stringify(data) })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status === 200 && body.success) {
+                    const item = document.querySelector(`.education-item-display[data-id="${id}"]`);
+                    if(item) {
+                        const escapedNotes = (body.data.notes || '').replace(/'/g, "\\'");
+                        item.innerHTML = getEducationHtml(body.data, escapedNotes);
+                        applyHighlightEffect(item.querySelector('.card-body'));
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('editEducationModal')).hide();
+                    showToast('Updated successfully.', 'success');
+                } else {
+                    // Hiển thị thông báo lỗi chi tiết từ backend
+                    showToast(body.message || 'Update failed due to an unknown error.', 'error');
+                }
+            }).catch(err => showToast('A network error occurred.', 'error'));
+    }
+
+    // EXPERIENCE Functions
+    function addExperienceToDOM(exp) {
+        const list = document.getElementById('jobExListContainer');
+        const emptyMsg = document.getElementById('jobExEmptyMessage');
+        if(emptyMsg) emptyMsg.style.display = 'none';
+        const div = document.createElement('div');
+        div.className = 'dynamic-item card mb-3 job-experience-item-display item-entering';
+        div.setAttribute('data-id', exp.id);
+        const escapedDescription = (exp.description || '').replace(/'/g, "\\'");
+        div.innerHTML = getExperienceHtml(exp, escapedDescription);
+        list.prepend(div);
+        updateSectionBadges();
+    }
+
+    function getExperienceHtml(jobExp, escapedDescription) {
+        const endDateDisplay = jobExp.endDate ? formatDateForDisplay(jobExp.endDate) : 'Present';
+        const isCurrent = !jobExp.endDate;
+        const description = jobExp.description || '';
+
+        return `
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1"><h5 class="h6 mb-0 fw-bold me-2">${jobExp.jobTitle}</h5>${isCurrent ? '<span class="current-badge badge bg-success bg-opacity-10 text-success"><i class="fas fa-briefcase fa-xs me-1"></i> Current</span>' : ''}</div>
+                        <p class="text-dark mb-1 fw-medium"><i class="fas fa-building fa-xs me-1 text-muted"></i> <span>${jobExp.companyName}</span></p>
+                        <div class="d-flex text-muted small mb-2"><span class="me-3"><i class="fas fa-clock fa-xs me-1"></i> <span>${jobExp.duration || ''}</span></span><span><i class="fas fa-calendar-alt fa-xs me-1"></i> ${formatDateForDisplay(jobExp.startDate)} - ${endDateDisplay}</span></div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v text-muted"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                            <li><button class="dropdown-item" type="button" onclick="openEditJobModal(${jobExp.id},'${jobExp.jobTitle}','${jobExp.companyName}','${jobExp.startDate}','${jobExp.endDate || ''}','${escapedDescription}')"><i class="fas fa-edit me-2 text-primary"></i> Edit</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" onclick="deleteJobEx(${jobExp.id})"><i class="fas fa-trash-alt me-2"></i> Delete</button></li>
+                        </ul>
+                    </div>
+                </div>
+                ${description ? `<div class="bg-light rounded p-2 mt-2"><small class="text-muted">${description}</small></div>` : ''}
+            </div>`;
+    }
+
+    function openEditJobModal(id, jobTitle, companyName, startDate, endDate, description) {
+        document.getElementById('editJobId').value = id;
+        document.getElementById('editJobTitle').value = jobTitle;
+        document.getElementById('editCompanyName').value = companyName;
+        document.getElementById('editStartDate').value = startDate;
+        document.getElementById('editDescription').value = description || '';
+
+        const endDateInput = document.getElementById('editEndDate');
+        const isCurrentCheckbox = document.getElementById('jobIsCurrentCheckboxEdit');
+
+        const isCurrent = !endDate || endDate === 'null';
+        isCurrentCheckbox.checked = isCurrent;
+        endDateInput.disabled = isCurrent;
+        endDateInput.value = isCurrent ? '' : endDate;
+
+        const modal = new bootstrap.Modal(document.getElementById('editJobModal'));
+        modal.show();
+    }
+
+    function deleteJobEx(id) {
+        DeleteModal.show('Delete Experience', () => {
+            fetch(`/jobseeker/job-experience/${id}`, { method: 'DELETE', headers: createFetchHeaders() })
+                .then(r => r.json()).then(res => {
+                if (res.success) {
+                    const item = document.querySelector(`.job-experience-item-display[data-id="${id}"]`);
+                    if(item) {
+                        item.classList.add('item-leaving');
+                        setTimeout(() => { item.remove(); updateSectionBadges(); }, 400);
+                        showToast('Experience deleted.', 'success');
+                    }
+                } else showToast('Failed to delete.', 'error');
+            });
+        });
+    }
+
+    function saveJobExperienceChanges() {
+        const id = document.getElementById('editJobId').value;
+        const data = {
+            jobTitle: document.getElementById('editJobTitle').value,
+            companyName: document.getElementById('editCompanyName').value,
+            startDate: document.getElementById('editStartDate').value,
+            endDate: document.getElementById('editEndDate').value || null,
+            description: document.getElementById('editDescription').value
+        };
+
+        fetch(`/jobseeker/job-experience/${id}`, { method: 'PUT', headers: createFetchHeaders(), body: JSON.stringify(data) })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status === 200 && body.success) {
+                    const item = document.querySelector(`.job-experience-item-display[data-id="${id}"]`);
+                    if(item) {
+                        const escapedDescription = (body.data.description || '').replace(/'/g, "\\'");
+                        item.innerHTML = getExperienceHtml(body.data, escapedDescription);
+                        applyHighlightEffect(item.querySelector('.card-body'));
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('editJobModal')).hide();
+                    showToast('Updated successfully.', 'success');
+                } else {
+                    showToast(body.message || 'Update failed due to an unknown error.', 'error');
+                }
+            }).catch(err => showToast('A network error occurred.', 'error'));
+    }
+
+    // --- 4. INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Education Form
+        document.getElementById('educationForm').addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const data = {
+                degree: document.getElementById("addDegree").value,
+                institution: document.getElementById("addInstitution").value, // Corrected from schoolName
+                educationStartDate: document.getElementById("addEducationStartDate").value,
+                educationEndDate: document.getElementById("addEducationEndDate").value,
+                educationDetail: document.getElementById("addEducationDetail").value
+            };
+            try {
+                const response = await fetch('/jobseeker/education', { method: 'POST', headers: createFetchHeaders(), body: JSON.stringify(data) });
+                const responseData = await response.json();
+                if (response.ok) {
+                    showToast('Education added successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addEducationModal')).hide();
+                    addEducationToDOM(responseData.data);
+                    this.reset();
+                } else {
+                    showToast(responseData.message || "An unknown error occurred.", 'error');
+                }
+            } catch (error) {
+                showToast("Could not connect to the server. Please try again.", 'error');
+            }
+        });
+
+        // Add Experience Form
+        document.getElementById('jobExperienceForm').addEventListener("submit", function(e) {
+            e.preventDefault();
+            const data = {
+                jobTitle: document.getElementById("addJobTitle").value,
+                companyName: document.getElementById("addCompanyName").value,
+                startDate: document.getElementById("addJobStartDate").value,
+                endDate: document.getElementById("addJobEndDate").value || null,
+                description: document.getElementById("addJobDetail").value
+            };
+            fetch('/jobseeker/job-experience', { method: 'POST', headers: createFetchHeaders(), body: JSON.stringify(data) })
+                .then(r => r.json()).then(res => {
+                if(res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('addExperienceModal')).hide();
+                    addExperienceToDOM(res.data);
+                    showToast('Added successfully.', 'success');
+                    this.reset();
+                } else {
+                    showToast(res.message || 'Failed to add experience.', 'error');
+                }
+            });
+        });
+
+        // Logic for "I currently work here" checkbox
+        const jobIsCurrentCheckbox = document.getElementById('jobIsCurrentCheckbox');
+        const addJobEndDateInput = document.getElementById('addJobEndDate');
+        jobIsCurrentCheckbox.addEventListener('change', function() {
+            addJobEndDateInput.disabled = this.checked;
+            addJobEndDateInput.required = !this.checked;
+            if (this.checked) addJobEndDateInput.value = '';
+        });
+
+        // Logic for "I currently study here" checkbox in EDIT modal
+        const eduIsCurrentCheckboxEdit = document.getElementById('eduIsCurrentCheckboxEdit');
+        const editEducationEndDateInput = document.getElementById('editEndDateInput');
+        eduIsCurrentCheckboxEdit.addEventListener('change', function() {
+            editEducationEndDateInput.disabled = this.checked;
+            if (this.checked) editEducationEndDateInput.value = '';
+        });
+
+        // Logic for "I currently work here" checkbox in EDIT modal
+        const jobIsCurrentCheckboxEdit = document.getElementById('jobIsCurrentCheckboxEdit');
+        const editJobEndDateInput = document.getElementById('editEndDate');
+        jobIsCurrentCheckboxEdit.addEventListener('change', function() {
+            editJobEndDateInput.disabled = this.checked;
+            if (this.checked) editJobEndDateInput.value = '';
+        });
+
+    });
+</script>
+</body>
+</html>

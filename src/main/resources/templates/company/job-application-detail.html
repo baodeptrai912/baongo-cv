@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <title>Review Candidate - BaoNgo ATS</title>
+
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/whole.css}">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script th:src="@{/js/Toast.js}" defer></script>
+    <script th:src="@{/js/FetchNotification.js}" defer></script>
+
+    <style>
+        :root {
+            /* --- BRAND COLORS --- */
+            --primary-hue: 24;
+            --primary: hsl(var(--primary-hue), 90%, 48%);
+            --gradient-brand: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+
+            /* --- NEUTRALS --- */
+            --bg-app: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+
+            /* --- DIMENSIONS --- */
+            --sidebar-width: 420px;
+            --header-height: 64px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex; flex-direction: column; margin: 0;
+        }
+
+        /* HEADER */
+        .app-header {
+            height: var(--header-height); background: var(--gradient-brand); color: white;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(234, 88, 12, 0.2); z-index: 50; flex-shrink: 0;
+        }
+        .back-btn {
+            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.15); border-radius: 10px; color: white; text-decoration: none;
+            transition: all 0.2s ease; backdrop-filter: blur(4px);
+        }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateX(-2px); color: white; }
+
+        /* --- BUTTON STYLES --- */
+        .header-btn-light {
+            background: white; color: var(--primary); border: none; font-size: 0.85rem; font-weight: 600;
+            border-radius: 8px; padding: 8px 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.2s;
+            display: inline-flex; align-items: center; text-decoration: none; /* Thêm display flex */
+        }
+        .header-btn-light:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); color: var(--primary); }
+
+        .header-btn-ghost {
+            background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
+            font-size: 0.85rem; font-weight: 600; border-radius: 8px; padding: 8px 16px;
+            transition: all 0.2s; display: inline-flex; align-items: center; text-decoration: none;
+            backdrop-filter: blur(4px);
+        }
+        .header-btn-ghost:hover { background: rgba(255, 255, 255, 0.3); color: white; }
+
+        /* LAYOUT */
+        .main-wrapper { display: flex; flex: 1; height: calc(100vh - var(--header-height)); overflow: hidden; }
+        .left-panel {
+            width: var(--sidebar-width); min-width: var(--sidebar-width); background: var(--bg-panel);
+            border-right: 1px solid var(--border-color); display: flex; flex-direction: column; height: 100%; z-index: 20;
+        }
+        .panel-scroll-area { flex: 1; overflow-y: auto; padding: 32px 24px; scroll-behavior: smooth; }
+        .panel-scroll-area::-webkit-scrollbar { width: 6px; }
+        .panel-scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .panel-scroll-area::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+        /* HERO & INFO */
+        .candidate-hero { text-align: center; margin-bottom: 32px; }
+        .avatar-ring {
+            width: 96px; height: 96px; margin: 0 auto 16px; padding: 4px; border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--primary), #fed7aa, var(--primary));
+            display: flex; justify-content: center; align-items: center;
+        }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid white; background: white; }
+        .avatar-circle {
+            width: 100%; height: 100%; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700; color: var(--text-main); border: 3px solid white;
+        }
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border-radius: 30px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+        }
+        .status-pending { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+        .status-shortlisted { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+        .status-rejected { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+        /* SECTIONS & TIMELINE */
+        .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .section-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+        .section-line { flex: 1; height: 1px; background: var(--border-color); }
+        .info-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-main); }
+        .cover-letter-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; font-size: 0.9rem; line-height: 1.6; color: #334155; }
+
+        /* Timeline */
+        .timeline-container { padding-left: 12px; margin-left: 4px; border-left: 2px solid #f1f5f9; }
+        .timeline-item { position: relative; padding-left: 24px; padding-bottom: 24px; }
+        .timeline-item:last-child { padding-bottom: 0; }
+        .timeline-marker {
+            position: absolute; left: -7px; top: 0; width: 12px; height: 12px;
+            background: white; border: 2px solid #cbd5e1; border-radius: 50%;
+        }
+        .timeline-item.active .timeline-marker { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2); }
+        .timeline-content h6 { font-size: 0.9rem; margin: 0; font-weight: 600; }
+        .timeline-content span { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* EVALUATION & ACTION BAR */
+        .evaluation-card { background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); }
+        .score-display { font-size: 2.5rem; font-weight: 800; background: var(--gradient-brand); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Sticky Action Bar */
+        .action-bar-sticky { padding: 16px 24px; background: rgba(255, 255, 255, 0.95); border-top: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-action { padding: 12px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; border: none; transition: all 0.2s; }
+        .btn-reject { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+        .btn-reject:hover:not(:disabled) { background: #ffe4e6; }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover:not(:disabled) { background: #059669; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* RIGHT PANEL */
+        .right-panel { flex: 1; background: #525659; display: flex; flex-direction: column; position: relative; }
+        .preview-header { height: 48px; background: white; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .empty-state { height: 100%; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; }
+
+        /* --- MODAL STYLES (GIỮ NGUYÊN) --- */
+        .modal-warning-icon { width: 60px; height: 60px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1rem; }
+        .modal-confirm-title { font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; text-align: center; }
+        .modal-confirm-text { color: #64748b; font-size: 0.9rem; text-align: center; line-height: 1.6; margin-bottom: 1.5rem; }
+        .warning-box { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #c2410c; display: flex; gap: 10px; text-align: left; margin-bottom: 1.5rem; }
+        .email-modal-content { border-radius: 16px; border: none; overflow: hidden; }
+        .email-header-bg { background: var(--gradient-brand); color: white; padding: 20px 24px; }
+        .form-label-sm { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+        .config-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .editor-textarea { border: 1px solid #e2e8f0; border-radius: 12px; width: 100%; padding: 16px; font-size: 0.9rem; color: #334155; outline: none; resize: none; line-height: 1.6; transition: all 0.2s; }
+        .editor-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1); }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+
+<header class="app-header">
+    <div class="d-flex align-items-center gap-3">
+        <a th:href="@{/company/job-view-applicants}" class="back-btn" title="Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <!-- Chỉ hiển thị tên, không phải link nữa -->
+            <h6 class="m-0 fw-bold" style="font-size: 1.1rem;" th:text="${applicant.user.fullName}">Candidate Name</h6>
+            <div style="font-size: 0.8rem; opacity: 0.9; font-weight: 300;">
+                Applied for: <span class="fw-medium" th:text="${applicant.jobPosting.title}">Job Title</span>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <!-- [NEW BUTTON] Nút View Profile Rõ Ràng -->
+        <a th:href="@{'/company/job-application-detail/user-profile/' + ${applicant.user.id}}"
+           target="_blank"
+           class="header-btn-ghost">
+            <i class="far fa-user-circle me-2"></i>View Public Profile
+        </a>
+
+        <button class="header-btn-light" onclick="openInterviewModal()">
+            <i class="far fa-calendar-check me-2"></i>Schedule Interview
+        </button>
+    </div>
+</header>
+
+<div class="main-wrapper">
+    <!-- ... Phần nội dung còn lại giữ nguyên như code cũ của bạn ... -->
+    <aside class="left-panel">
+        <div class="panel-scroll-area">
+            <div class="candidate-hero">
+                <div class="avatar-ring">
+                    <img th:if="${applicant.user.avatar != null and !#strings.isEmpty(applicant.user.avatar)}"
+                         th:src="${applicant.user.avatar}" class="avatar-img" alt="Avatar">
+                    <div th:unless="${applicant.user.avatar != null and !#strings.isEmpty(applicant.user.avatar)}"
+                         class="avatar-circle" th:text="${#strings.substring(applicant.user.fullName, 0, 2).toUpperCase()}">NA</div>
+                </div>
+                <div class="mb-2">
+                    <span class="status-pill"
+                          th:classappend="${applicant.application.status.name() == 'PENDING' ? 'status-pending' :
+                                           (applicant.application.status.name() == 'SHORTLISTED' ? 'status-shortlisted' :
+                                           (applicant.application.status.name() == 'HIRED' ? 'status-shortlisted' : 'status-rejected'))}"
+                          th:text="${applicant.application.status.label}">PENDING</span>
+                </div>
+                <div class="text-muted small">ID: #<span th:text="${applicant.application.id}">123</span></div>
+            </div>
+
+            <!-- ... (Phần thông tin liên hệ, history, evaluation giữ nguyên) ... -->
+            <div class="mb-4">
+                <div class="section-header"><span class="section-title">Contact Info</span><div class="section-line"></div></div>
+                <div class="info-row"><i class="far fa-envelope"></i><span th:text="${applicant.user.email}">email</span></div>
+                <div class="info-row"><i class="fas fa-phone-alt"></i><span th:text="${applicant.user.phoneNumber}">phone</span></div>
+                <div class="info-row"><i class="fas fa-map-marker-alt"></i><span th:text="${applicant.user.address ?: 'N/A'}">addr</span></div>
+                <div class="info-row"><i class="far fa-clock"></i><span th:text="'Applied: ' + ${#temporals.format(applicant.application.applicationDate, 'dd MMM yyyy')}">Date</span></div>
+            </div>
+
+            <div class="mb-4" th:if="${applicant.application.coverLetter}">
+                <div class="section-header"><span class="section-title">Cover Letter</span><div class="section-line"></div></div>
+                <div class="cover-letter-card" th:text="${applicant.application.coverLetter}">...</div>
+            </div>
+
+            <div class="mb-4" th:if="${not #lists.isEmpty(applicant.logs)}">
+                <div class="section-header"><span class="section-title">History</span><div class="section-line"></div></div>
+                <div class="timeline-container">
+                    <div th:each="log, iterStat : ${applicant.logs}" class="timeline-item" th:classappend="${iterStat.index == 0} ? 'active' : ''">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h6 th:text="${log.statusTitle}">Status</h6>
+                            <span th:text="${#temporals.format(log.timestamp, 'dd/MM/yyyy • HH:mm')}">Time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="section-header"><span class="section-title">Evaluation</span><div class="section-line"></div></div>
+                <form id="reviewForm">
+                    <input type="hidden" name="applicantId" th:value="${applicant.application.id}">
+                    <div class="evaluation-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="fw-bold text-dark small">Score</label>
+                            <span class="score-display" id="scoreVal" th:text="${applicant.review != null ? #numbers.formatDecimal(applicant.review.score, 1, 1) : '5.0'}">5.0</span>
+                        </div>
+                        <input type="range" class="form-range" min="1" max="10" step="0.5" th:value="${applicant.review != null ? applicant.review.score : '5'}" name="score"
+                               oninput="document.getElementById('scoreVal').innerText = parseFloat(this.value).toFixed(1)">
+                        <div class="d-flex justify-content-between small text-muted mb-3" style="font-size: 0.75rem;">
+                            <span>Poor</span><span>Excellent</span>
+                        </div>
+                        <textarea class="form-control note-input" rows="3" name="note" placeholder="Internal notes..." th:text="${applicant.review != null ? applicant.review.note : ''}"></textarea>
+                        <button type="submit" class="btn btn-dark w-100 mt-3 py-2 fw-bold" style="border-radius: 8px;">Save Evaluation</button>
+                    </div>
+                </form>
+            </div>
+            <div style="height: 50px;"></div>
+        </div>
+
+        <div class="action-bar-sticky">
+            <button class="btn-action btn-reject" onclick="prepareAction('reject')"
+                    th:disabled="${applicant.application.status.name() == 'REJECTED'
+                                 || applicant.application.status.name() == 'SHORTLISTED'
+                                 || applicant.application.status.name() == 'INTERVIEW_SCHEDULED'
+                                 || applicant.application.status.name() == 'HIRED'}">
+                <i class="fas fa-times me-2"></i>Reject
+            </button>
+            <button class="btn-action btn-approve" onclick="prepareAction('shortlist')"
+                    th:disabled="${applicant.application.status.name() == 'SHORTLISTED'
+                                 || applicant.application.status.name() == 'REJECTED'
+                                 || applicant.application.status.name() == 'INTERVIEW_SCHEDULED'
+                                 || applicant.application.status.name() == 'HIRED'}">
+                <i class="fas fa-check me-2"></i>Shortlist
+            </button>
+        </div>
+    </aside>
+
+    <main class="right-panel">
+        <div class="preview-header">
+            <div class="d-flex align-items-center gap-2 text-secondary fw-bold" style="font-size: 0.85rem;">
+                <i class="fas fa-file-pdf text-danger fs-5"></i><span>Resume Preview</span>
+            </div>
+            <div th:if="${applicant.application.resume}">
+                <a th:href="${applicant.application.resume}" download target="_blank"
+                   class="btn btn-light btn-sm border text-muted"
+                   id="downloadResumeBtn">Download</a>
+            </div>
+        </div>
+        <div th:if="${applicant.application.resume}" style="flex: 1; width: 100%; position: relative;">
+            <iframe th:src="@{'https://view.officeapps.live.com/op/embed.aspx?src=' + ${applicant.application.resume}}" style="width:100%; height:100%; border:none;" title="Resume Viewer"></iframe>
+        </div>
+        <div th:unless="${applicant.application.resume}" class="empty-state">
+            <i class="fas fa-file-circle-xmark fa-4x mb-3" style="color: #cbd5e1;"></i>
+            <h5 class="fw-bold text-dark">No Resume Found</h5>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Confirm -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg p-3" style="border-radius: 16px;">
+            <div class="modal-body p-2">
+                <div class="modal-warning-icon" id="modalIcon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h5 class="modal-confirm-title" id="modalTitle">Confirm Action</h5>
+                <p class="modal-confirm-text" id="modalText">Are you sure you want to proceed?</p>
+
+                <div class="warning-box">
+                    <i class="fas fa-info-circle mt-1"></i>
+                    <div>
+                        <strong>Irreversible Action:</strong><br>
+                        Once you confirm, you <u style="font-weight: 800;">cannot rollback</u> status to 'Pending'.
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-dark fw-bold py-2" id="btnConfirmAction" style="border-radius: 8px;">
+                        Yes, I Understand
+                    </button>
+                    <button type="button" class="btn btn-light fw-bold py-2 text-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Interview -->
+<div class="modal fade" id="interviewModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content email-modal-content shadow-lg">
+            <div class="modal-header email-header-bg border-0">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1"><i class="far fa-calendar-alt me-2"></i>Schedule Interview</h5>
+                    <p class="m-0 small opacity-75">Configure details to generate the invitation email.</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="interviewForm">
+                    <div class="config-box">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-sm">Date</label>
+                                <input type="date" class="form-control" id="intDate" onchange="generateEmailBody()">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-sm">Time</label>
+                                <input type="time" class="form-control" id="intTime" onchange="generateEmailBody()">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-sm">Type</label>
+                                <select class="form-select" id="intType" onchange="generateEmailBody()">
+                                    <option value="Online (Google Meet)">Online (Google Meet)</option>
+                                    <option value="In-Person (Office)">In-Person (Office)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-sm">Location / Meeting Link</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="fas fa-link text-muted"></i></span>
+                                    <input type="text" class="form-control" id="intLocation"
+                                           placeholder="e.g., meet.google.com/abc-xyz or 'Room 301, Building A'"
+                                           oninput="generateEmailBody()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label-sm text-primary">Email Preview (Editable)</label>
+                        <textarea class="editor-textarea" id="emailBody" rows="8"></textarea>
+                    </div>
+                    <input type="hidden" id="emailSubject" th:value="'Invitation to Interview - ' + ${applicant.jobPosting.title} + ' - [BaoNgo Corp]'">
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 px-4 pb-4">
+                <div class="me-auto text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Applicant: <strong th:text="${applicant.user.fullName}">Name</strong>
+                </div>
+                <button type="button" class="btn btn-light fw-bold text-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark fw-bold px-4 rounded-3 d-flex align-items-center gap-2" onclick="sendInterviewEmail()">
+                    <span id="btnText">Send Invitation</span>
+                    <i class="fas fa-paper-plane small"></i>
+                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Scripts logic cũ của bạn -->
+<script th:inline="javascript">
+    // ... (Giữ nguyên phần script cũ, không thay đổi) ...
+    const applicantId = /*[[${applicant.application.id}]]*/ 0;
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    const candidateName = /*[[${applicant.user.fullName}]]*/ 'Candidate';
+
+    // --- HELPER TOAST ---
+    function showCustomToast(type, message) {
+        if (typeof showToast === 'function') {
+            showToast(message, type);
+        } else {
+            console.warn('Toast library not loaded');
+            alert(message);
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const downloadBtn = document.getElementById('downloadResumeBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+                showCustomToast('info', 'Preparing your download... Please wait.');
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                    showCustomToast('success', 'Download completed!');
+                }, 3000);
+            });
+        }
+
+        // =========================================
+        // 1.5. LOGIC SAVE REVIEW (Fetch API)
+        // =========================================
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+
+                const formData = new FormData(this);
+                const data = {
+                    applicantId: parseInt(formData.get('applicantId')),
+                    score: parseFloat(formData.get('score')),
+                    note: formData.get('note')
+                };
+
+                fetch('/company/review/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                    body: JSON.stringify(data)
+                })
+                    .then(res => res.json())
+                    .then(apiResponse => {
+                        if (apiResponse.success) {
+                            showCustomToast('success', apiResponse.message);
+                        } else {
+                            showCustomToast('error', apiResponse.message || 'Failed to save evaluation.');
+                        }
+                    })
+                    .catch(err => showCustomToast('error', 'An error occurred.'))
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    });
+            });
+        }
+    });
+
+    // =========================================
+    // 2. MODAL CONFIRMATION LOGIC
+    // =========================================
+    let pendingAction = null; // Biến lưu hành động đang chờ
+
+    function prepareAction(actionType) {
+        pendingAction = actionType; // 'shortlist' hoặc 'reject'
+
+        const modalTitle = document.getElementById('modalTitle');
+        const modalText = document.getElementById('modalText');
+        const btnConfirm = document.getElementById('btnConfirmAction');
+        const modalIcon = document.getElementById('modalIcon');
+
+        if (actionType === 'shortlist') {
+            modalTitle.innerText = "Confirm Shortlist";
+            modalText.innerText = `Move ${candidateName} to Shortlist?`;
+            btnConfirm.innerText = "Yes, Shortlist Candidate";
+            btnConfirm.className = "btn btn-success fw-bold py-2 w-100"; // Nút xanh
+            modalIcon.innerHTML = '<i class="fas fa-check"></i>';
+            modalIcon.style.background = '#f0fdf4';
+            modalIcon.style.color = '#16a34a';
+        } else {
+            modalTitle.innerText = "Confirm Rejection";
+            modalText.innerText = `Reject application from ${candidateName}?`;
+            btnConfirm.innerText = "Yes, Reject Candidate";
+            btnConfirm.className = "btn btn-danger fw-bold py-2 w-100"; // Nút đỏ
+            modalIcon.innerHTML = '<i class="fas fa-times"></i>';
+            modalIcon.style.background = '#fef2f2';
+            modalIcon.style.color = '#dc2626';
+        }
+
+        // Hiện Modal
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmModal.show();
+    }
+
+    // Sự kiện Click nút "YES" trong Modal
+    document.getElementById('btnConfirmAction').addEventListener('click', function() {
+        const confirmModalEl = document.getElementById('confirmationModal');
+        const modal = bootstrap.Modal.getInstance(confirmModalEl);
+        modal.hide(); // Ẩn modal
+
+        if (pendingAction === 'shortlist') {
+            executeShortlist();
+        } else if (pendingAction === 'reject') {
+            executeReject();
+        }
+    });
+
+    // =========================================
+    // 3. API CALLS (Shortlist & Reject)
+    // =========================================
+
+    function executeShortlist() {
+        fetch(`/company/job-application/shortlist/${applicantId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            }
+        })
+            .then(async res => {
+                if (res.ok) {
+                    showCustomToast('success', 'Candidate Shortlisted Successfully!');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    const errorData = await res.json();
+                    showCustomToast('error', errorData.message || 'Failed to shortlist.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showCustomToast('error', 'Network error occurred.');
+            });
+    }
+
+    function executeReject() {
+        fetch(`/company/job-application/reject/${applicantId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            }
+        })
+            .then(async res => {
+                if (res.ok) {
+                    showCustomToast('success', 'Candidate Rejected Successfully.');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    const errorData = await res.json();
+                    showCustomToast('error', errorData.message || 'Failed to reject.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showCustomToast('error', 'Network error occurred.');
+            });
+    }
+
+    // =========================================
+    // 4. INTERVIEW MODAL LOGIC
+    // =========================================
+    function openInterviewModal() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('intDate').valueAsDate = tomorrow;
+        document.getElementById('intTime').value = "10:00";
+        document.getElementById('intLocation').value = "";
+
+        generateEmailBody();
+        const modal = new bootstrap.Modal(document.getElementById('interviewModal'));
+        modal.show();
+    }
+
+    function generateEmailBody() {
+        const dateVal = document.getElementById('intDate').value;
+        const timeVal = document.getElementById('intTime').value;
+        const typeVal = document.getElementById('intType').value;
+        const locVal = document.getElementById('intLocation').value || "[Link/Location will be provided]";
+
+        let dateStr = dateVal;
+        if(dateVal) {
+            const d = new Date(dateVal);
+            dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        const template = `Dear ${candidateName},
+
+We have reviewed your application and would like to invite you to an interview to discuss the position and your qualifications further.
+
+Interview Details:
+--------------------------------------
+Date: ${dateStr}
+Time: ${timeVal}
+Type: ${typeVal}
+Location/Link: ${locVal}
+--------------------------------------
+
+Please confirm if you are available at this time. If not, kindly propose an alternative slot.
+
+We look forward to meeting you.
+
+Best regards,
+Recruitment Team | BaoNgo Corp`;
+
+        document.getElementById('emailBody').value = template;
+    }
+
+    function sendInterviewEmail() {
+        const subject = document.getElementById('emailSubject').value;
+        const body = document.getElementById('emailBody').value;
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const sendBtn = document.querySelector('#interviewModal .modal-footer button.btn-dark');
+
+        if(!body.trim()) {
+            showCustomToast('warning', "Content cannot be empty.");
+            return;
+        }
+
+        btnText.innerText = "Sending...";
+        btnSpinner.classList.remove('d-none');
+        sendBtn.disabled = true;
+
+        fetch('/company/job-application/schedule-interview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ applicantId: applicantId, subject: subject, content: body })
+        })
+            .then(res => {
+                if (res.ok) return {};
+                return res.json().then(data => { throw new Error(data.message || "Unknown error"); });
+            })
+            .then(() => {
+                showCustomToast('success', "Invitation Sent Successfully!");
+                bootstrap.Modal.getInstance(document.getElementById('interviewModal')).hide();
+                setTimeout(() => location.reload(), 2000);
+            })
+            .catch(err => {
+                console.error(err);
+                showCustomToast('error', "Failed: " + err.message);
+            })
+            .finally(() => {
+                btnText.innerText = "Send Invitation";
+                btnSpinner.classList.add('d-none');
+                sendBtn.disabled = false;
+            });
+    }
+</script>
+
+</body>
+</html>

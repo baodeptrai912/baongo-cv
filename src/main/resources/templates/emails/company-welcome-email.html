@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient chào đón (Cam -> Hồng nhạt) */
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #fb923c 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        /* Content */
+        .content {
+            padding: 45px 40px;
+        }
+
+        .greeting {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 800;
+        }
+
+        .highlight {
+            color: #ea580c;
+            font-weight: 800;
+        }
+
+        /* Intro Text */
+        .intro-text {
+            font-size: 16px;
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        /* Steps Box - Hướng dẫn người dùng */
+        .steps-box {
+            background-color: #fff7ed; /* Cam rất nhạt */
+            border: 1px solid #ffedd5;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .steps-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #9a3412;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #fed7aa;
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            background-color: #f97316;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-text {
+            font-size: 15px;
+            color: #4b5563;
+        }
+
+        .step-text strong {
+            color: #c2410c;
+        }
+
+        /* CTA Button 3D */
+        .btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 16px 0;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.25);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong {
+            color: #1f2937;
+        }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .social-links a {
+            display: inline-block;
+            margin: 0 8px;
+            text-decoration: none;
+            color: #9ca3af;
+            font-weight: 600;
+        }
+        .social-links a:hover { color: #ea580c; }
+
+        .footer-links a {
+            color: #6b7280;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        .footer-links a:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>🚀 Welcome Aboard!</h1>
+        <p>Ready to find your next superstar?</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${companyName}">Company Name</span>,
+        </div>
+
+        <!-- Intro -->
+        <p class="intro-text">
+            We are thrilled to have you on <strong>BaoNgoCV</strong>! You’ve just taken the first step towards building a world-class team. Our platform is designed to make recruiting simple, smart, and effective.
+        </p>
+
+        <!-- Quick Start Guide (Checklist) -->
+        <div class="steps-box">
+            <span class="steps-title">🎯 Quick Start Guide:</span>
+
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-text"><strong>Complete Your Profile:</strong> Add your logo and company story to attract candidates.</div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-text"><strong>Post a Job:</strong> Create your first job listing in minutes.</div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-text"><strong>Invite Team:</strong> Add colleagues to collaborate on hiring.</div>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <a th:href="${loginUrl}" class="btn">
+            Go to Your Dashboard
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Need help getting started? Our support team is just an email away.</p>
+            <p style="margin-top: 15px;">
+                Happy Hiring,<br/>
+                <strong>The BaoNgoCV Team</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv" width="80" style="margin-bottom: 20px; opacity: 0.8;">
+
+        <div class="social-links" style="margin-bottom: 15px;">
+            <a href="#">LinkedIn</a> • <a href="#">Facebook</a> • <a href="#">Twitter</a>
+        </div>
+
+        <p>&copy; <span th:text="${currentYear}">2025</span> BaoNgoCV Inc. All rights reserved.</p>
+        <p>123 Innovation Drive, Tech City, TC 90210</p>
+
+        <div class="footer-links" style="margin-top: 15px;">
+            <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Unsubscribe</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Job Opportunity - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Cam/Vàng - Tươi mới, cơ hội */
+        .header {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); /* Màu xanh dương tin cậy */
+            color: white;
+            padding: 45px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #1e40af; font-weight: 700; }
+
+        /* Job Card - Thiết kế như trên web */
+        .job-card {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            margin-right: 20px;
+            object-fit: contain;
+            border: 1px solid #f3f4f6;
+        }
+
+        .job-info h3 {
+            font-size: 18px;
+            color: #111827;
+            margin-bottom: 2px;
+            font-weight: 700;
+        }
+
+        .job-info p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .job-tags {
+            margin-top: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: #eef2ff; /* Nền xanh dương rất nhạt */
+            color: #3730a3;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        /* Reason Box */
+        .reason-box {
+            font-size: 13px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: -20px;
+            margin-bottom: 30px;
+        }
+
+        .reason-box strong { color: #3730a3; font-weight: 700; }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+            border-bottom: 4px solid #1d4ed8;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #1d4ed8, #60a5fa); /* Xanh dương */
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #1d4ed8; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>💼 New Job Opportunity</h1>
+        <p>A company you follow is hiring!</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${jobseekerName}">Job Seeker</span>,
+        </div>
+
+        <p style="margin-bottom: 25px; font-size: 16px; color: #374151;">
+            A new position just opened up that matches your interests. Don't miss this chance to be one of the first applicants.
+        </p>
+
+        <!-- Job Card -->
+        <a th:href="${jobUrl}" style="text-decoration: none;">
+            <div class="job-card">
+                <img class="company-logo" th:src="${companyLogoUrl}" src="https://via.placeholder.com/50" alt="Company Logo"/>
+                <div class="job-info">
+                    <h3 th:text="${jobTitle}">Senior Product Manager</h3>
+                    <p th:text="${companyName}">Innovatech Solutions</p>
+                    <div class="job-tags">
+                        <span class="tag">REMOTE</span>
+                        <span class="tag">FULL-TIME</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Reason for email -->
+        <div class="reason-box">
+            You're seeing this because you follow <strong th:text="${companyName}">Innovatech Solutions</strong>.
+        </div>
+
+        <!-- CTA Button -->
+        <a th:href="${jobUrl}" class="cta-button">
+            🚀 View & Apply Now
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>We wish you the best of luck in your application!</p>
+            <p style="margin-top: 10px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">My Feed</a> |
+            <a href="#">Job Alerts</a> |
+            <a href="#">Unsubscribe</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

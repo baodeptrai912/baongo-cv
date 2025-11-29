@@ -1,0 +1,38 @@
+# ====================================
+# 1. MAVEN BUILD (QUAN TRỌNG NHẤT)
+# ====================================
+# Chặn thư mục chứa file biên dịch (Rất nặng, Render sẽ tự tạo lại)
+target/
+*.class
+*.war
+*.ear
+
+# ====================================
+# 2. INTELLIJ IDEA (CẤU HÌNH IDE)
+# ====================================
+# Chặn các file cấu hình riêng của máy bạn (để không lỗi máy người khác)
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# ====================================
+# 3. FILE RÁC HỆ THỐNG
+# ====================================
+.DS_Store
+Thumbs.db
+
+# ====================================
+# 4. CÁC FILE LOG & TẠM
+# ====================================
+*.log
+*.pid
+
+# ====================================
+# 5. TOOL CŨ (KHÔNG DÙNG NỮA)
+# ====================================
+# Chặn file exe của Cloudflared vì Render dùng Linux không chạy được
+cloudflared.exe
+config.yml
+

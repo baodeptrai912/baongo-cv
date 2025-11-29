@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a New Job</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/api-config.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        :root {
+            --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            --primary-hover: linear-gradient(135deg, #e03e00 0%, #c73500 100%);
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-body: #f8f9fc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary-color: #ff6b35;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+        }
+        body { background: var(--bg-body); min-height: 100vh; color: #2d3748; }
+
+        .page-header-custom {
+            position: static !important; /* Thêm !important để force không sticky */
+            background-color: white;
+            padding: 1rem 0; /* Giảm padding top xuống */
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2.5rem;
+        }
+        
+        /* Card Style */
+        .post-job-card {
+            border-radius: 24px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            background: white; padding: 2.5rem;
+        }
+
+        /* Sticky Sidebar Style */
+        .sticky-sidebar {
+            position: sticky;
+            top: 20px; /* Khoảng cách từ mép trên màn hình */
+            z-index: 100;
+        }
+
+        .sidebar-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border: 1px solid #edf2f7;
+        }
+
+        .page-title {
+            font-size: 2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; letter-spacing: -0.025em;
+        }
+        .page-header-desc { color: var(--text-muted); font-size: 1rem; max-width: 600px; }
+
+
+
+        .form-section-title {
+            font-size: 1.1rem; font-weight: 700; margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem; border-bottom: 2px solid #edf2f7; display: flex; align-items: center;
+        }
+        .form-section-title i { color: #ff6b35; margin-right: 10px; background: #fff5f0; padding: 8px; border-radius: 8px; }
+
+        .form-label { font-weight: 600; font-size: 0.9rem; color: #4a5568; margin-bottom: 0.4rem; }
+        .form-control, .form-select {
+            border-radius: 10px; padding: 0.7rem 1rem; border: 2px solid #edf2f7;
+            transition: all 0.3s ease; background-color: #f8fafc;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1); background-color: #fff;
+        }
+        .form-control[readonly] { background-color: #edf2f7; color: #718096; }
+
+        .btn-add-more {
+            border: 2px dashed #cbd5e0; background: white; color: #718096; border-radius: 10px;
+            padding: 8px; width: 100%; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-add-more:hover { border-color: #ff6b35; color: #ff6b35; background: #fff5f0; }
+
+        .btn-submit-job {
+            background: var(--primary-gradient); border: none; border-radius: 12px; padding: 0.8rem;
+            font-weight: 700; color: white; width: 100%; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(224, 62, 0, 0.3);
+        }
+        .btn-submit-job:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(224, 62, 0, 0.4); color: white; }
+
+        .progress-container { background: #edf2f7; border-radius: 10px; height: 6px; overflow: hidden; margin-top: 5px; }
+        .progress-bar-custom { height: 100%; background: var(--primary-gradient); border-radius: 10px; transition: width 0.4s ease; }
+
+        .invalid-feedback { font-size: 0.8rem; font-weight: 500; }
+
+        @media (max-width: 992px) {
+            .sticky-sidebar { position: static; margin-top: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<!-- NEW CUSTOM HEADER -->
+<header class="page-header-custom">
+    <div class="container">
+        <div class="page-header-section mb-0">
+            <div>
+                <h1 class="page-title">Post a New Job</h1>
+                <p class="page-header-desc mb-0">Fill in the details to find your perfect candidate.</p>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <form action="#" method="post" id="postAJob">
+        <div class="row g-5 justify-content-center">
+
+            <div class="col-xl-7 col-lg-8">
+                <div class="post-job-card">
+                    <div class="mb-5">
+                        <h5 class="form-section-title"><i class="fas fa-building"></i>Basic Information</h5>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Position Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="e.g. Senior Backend Developer">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="jobType" class="form-label">Job Type</label>
+                                <select class="form-select" id="jobType" name="jobType" required>
+                                    <option value="" disabled selected>Select type...</option>
+                                    <option th:each="type : ${T(com.example.baoNgoCv.model.enums.JobType).values()}"
+                                            th:value="${type}" th:text="${type.displayName}" th:selected="${type.name() == 'FULL_TIME'}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <select class="form-select" id="location" name="location" required>
+                                    <option value="" disabled>Select location...</option>
+                                    <th:block th:each="loc : ${T(com.example.baoNgoCv.model.enums.LocationType).values()}">
+                                        <option th:value="${loc.name()}" th:text="${loc.displayName}" th:selected="${loc.name() == 'HANOI'}"></option>
+                                    </th:block>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="industryType" required>
+                                <option value="" disabled selected>Select industry...</option>
+                                <th:block th:each="industry : ${T(com.example.baoNgoCv.model.enums.IndustryType).values()}">
+                                    <option th:value="${industry}" th:text="${industry.displayName}"></option>
+                                </th:block>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <h5 class="form-section-title"><i class="fas fa-briefcase"></i>Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="experience" class="form-label">Experience</label>
+                                <select class="form-select" id="experience" name="experience" required>
+                                    <option value="" disabled>Select level...</option>
+                                    <th:block th:each="level : ${T(com.example.baoNgoCv.model.enums.ExperienceLevel).values()}">
+                                        <option th:value="${level.name()}" th:text="${level.displayName}" th:selected="${level.name() == 'ENTRY_LEVEL'}"></option>
+                                    </th:block>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary Range</label>
+                                <select class="form-select" id="salary" name="salary" required>
+                                    <option value="" disabled>Select range...</option>
+                                    <th:block th:each="s : ${T(com.example.baoNgoCv.model.enums.SalaryRange).values()}">
+                                        <option th:value="${s.name()}" th:text="${s.displayName}" th:selected="${s.name() == 'NEGOTIABLE'}"></option>
+                                    </th:block>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="form-section-title"><i class="fas fa-list-ul"></i>Requirements & Benefits</h5>
+
+                        <div class="mb-4">
+                            <label class="form-label">Job Description</label>
+                            <div id="description-container">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" name="description[]" placeholder="e.g. Design system architecture" required>
+                                    <button type="button" class="btn btn-outline-danger btn-remove remove-description"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-add-more" id="add-description"><i class="fas fa-plus me-2"></i>Add Description</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Requirements</label>
+                            <div id="requirements-container">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" name="requirements[]" placeholder="e.g. 3+ years of Java experience" required>
+                                    <button type="button" class="btn btn-outline-danger btn-remove remove-requirement"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-add-more" id="add-requirement"><i class="fas fa-plus me-2"></i>Add Requirement</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Benefits</label>
+                            <div id="benefits-container">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" name="benefits[]" placeholder="e.g. Premium Health Care" required>
+                                    <button type="button" class="btn btn-outline-danger btn-remove remove-benefit"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-add-more" id="add-benefit"><i class="fas fa-plus me-2"></i>Add Benefit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4">
+                <div class="sticky-sidebar">
+
+                    <div class="sidebar-card mb-4">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-rocket text-primary me-2"></i>Publish Action</h6>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="fw-bold text-muted" style="font-size: 0.75rem;">COMPLETION RATE</small>
+                                <small class="fw-bold text-primary" id="progressText">0%</small>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar-custom" id="formProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-submit-job" id="submitButton">
+                            PUBLISH JOB POST <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Your job will be reviewed instantly</small>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card mb-4">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-cog text-secondary me-2"></i>Configuration</h6>
+
+                        <div class="mb-3">
+                            <label for="company" class="form-label">Organization</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-building text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="company" th:value="${company.name}" name="company" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="targetHires" class="form-label" data-bs-toggle="tooltip" title="Job will close automatically when this number is reached.">
+                                Target Vacancies <i class="fas fa-info-circle text-muted small"></i>
+                            </label>
+                            <input type="number" class="form-control" id="targetHires" name="targetHires" min="1" max="30" required placeholder="Qty" value="1">
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="deadline" class="form-label">Application Deadline</label>
+                            <input type="date" class="form-control" id="deadline" name="deadline" required>
+                            <div class="form-text small mt-1">At least 24 hours from now</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    </form>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        const form = document.getElementById('postAJob');
+        const progressBar = document.getElementById('formProgress');
+        const progressText = document.getElementById('progressText');
+        const submitButton = document.getElementById('submitButton');
+
+        const config = {
+            storagePrefix: 'jobForm_',
+            maxFields: { requirements: 5, benefits: 5, description: 5 }
+        };
+
+        function updateProgress() {
+            const requiredFields = form.querySelectorAll('[required]');
+            const filledFields = Array.from(requiredFields).filter(field => {
+                return field.type === 'checkbox' || field.type === 'radio' ?
+                    field.checked : field.value.trim() !== '';
+            });
+            const progress = Math.round((filledFields.length / requiredFields.length) * 100);
+            progressBar.style.width = progress + '%';
+            progressText.textContent = progress + '%';
+
+            // Visual feedback on button
+            if(progress === 100) {
+                submitButton.classList.remove('opacity-75');
+            } else {
+                submitButton.classList.add('opacity-75');
+            }
+        }
+
+        function validateField(field) {
+            const value = field.value.trim();
+            const rules = {
+                title: val => val.length >= 5 || 'Min 5 characters required',
+                targetHires: val => {
+                    const num = parseInt(val);
+                    return (!isNaN(num) && num >= 1 && num <= 30) || '1-30 vacancies';
+                },
+                deadline: val => {
+                    const date = new Date(val);
+                    const minDate = new Date();
+                    minDate.setHours(0,0,0,0);
+                    return date > minDate || 'Must be future date';
+                }
+            };
+
+            let isValid = true;
+            let errorMessage = '';
+
+            if (field.hasAttribute('required') && !value) {
+                isValid = false;
+                errorMessage = 'Required';
+            } else if (value && rules[field.name]) {
+                const result = rules[field.name](value);
+                if (result !== true) {
+                    isValid = false;
+                    errorMessage = result;
+                }
+            }
+
+            const inputGroup = field.closest('.input-group') || field.parentNode;
+            const existingFeedback = inputGroup.querySelector('.invalid-feedback');
+            if (existingFeedback) existingFeedback.remove();
+
+            field.classList.remove('is-valid', 'is-invalid');
+            field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+
+            if (!isValid) {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'invalid-feedback';
+                feedbackDiv.textContent = errorMessage;
+                inputGroup.appendChild(feedbackDiv);
+            }
+            return isValid;
+        }
+
+        form.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('blur', () => validateField(input));
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) validateField(this);
+                updateProgress();
+            });
+        });
+
+        function setupDynamicFields(containerId, addButtonId, fieldName, placeholder) {
+            const container = document.getElementById(containerId);
+            const addButton = document.getElementById(addButtonId);
+            const maxFields = config.maxFields[fieldName.replace('[]', '')];
+
+            function addField() {
+                const currentFields = container.querySelectorAll(`input[name="${fieldName}"]`);
+                if (currentFields.length >= maxFields) {
+                    showToast(`Limit reached (${maxFields})`, 'warning');
+                    return;
+                }
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'input-group mb-2';
+                fieldDiv.innerHTML = `
+                    <input type="text" class="form-control" name="${fieldName}" placeholder="${placeholder}" required>
+                    <button type="button" class="btn btn-outline-danger btn-remove"><i class="fas fa-times"></i></button>
+                `;
+                container.appendChild(fieldDiv);
+
+                fieldDiv.querySelector('.btn-remove').onclick = () => {
+                    if (container.querySelectorAll(`input[name="${fieldName}"]`).length <= 1) return;
+                    fieldDiv.remove();
+                    updateProgress();
+                };
+                updateProgress();
+            }
+
+            // Setup existing remove buttons
+            const removeClass = fieldName.includes('requirements') ? 'remove-requirement' :
+                fieldName.includes('benefits') ? 'remove-benefit' : 'remove-description';
+
+            container.querySelectorAll(`.${removeClass}`).forEach(btn => {
+                btn.onclick = function() {
+                    if (container.querySelectorAll(`input[name="${fieldName}"]`).length <= 1) return;
+                    this.closest('.input-group').remove();
+                    updateProgress();
+                };
+            });
+            addButton.onclick = addField;
+        }
+
+        function serializeFormToJSON(form) {
+            const formData = new FormData(form);
+            const jsonObject = {};
+            for (const [key, value] of formData.entries()) {
+                if (key.endsWith('[]')) {
+                    const arrayKey = key.slice(0, -2);
+                    if (!jsonObject[arrayKey]) jsonObject[arrayKey] = [];
+                    jsonObject[arrayKey].push(value);
+                } else {
+                    jsonObject[key] = value;
+                }
+            }
+            return jsonObject;
+        }
+
+        function handleSubmissionError(error) {
+            console.error("Submit error:", error);
+
+            // NEW: Check for specific error code from our custom exception
+            if (error.code === 'INVALID_JOB_CREATION_DATA') {
+                const deadlineInput = document.getElementById('deadline');
+                deadlineInput.classList.add('is-invalid');
+
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'invalid-feedback';
+                feedbackDiv.textContent = error.message; // "The application deadline cannot be in the past."
+
+                deadlineInput.parentNode.appendChild(feedbackDiv);
+                showToast(error.message, "error"); // Vẫn hiển thị toast để thông báo chung
+            } else {
+                showToast(error.message || "An unknown error occurred while posting the job.", "error");
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            const targetHiresInput = document.getElementById('targetHires');
+            const deadlineInput = document.getElementById('deadline');
+
+            let isFormValid = validateField(targetHiresInput) && validateField(deadlineInput);
+
+            if (!isFormValid) {
+                showToast("Check errors in sidebar settings", "error");
+                return;
+            }
+            // Clear previous server-side errors
+            form.querySelectorAll('.invalid-feedback').forEach(div => div.remove());
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Posting...`;
+
+            try {
+                const data = serializeFormToJSON(form);
+                const response = await api.post(`/company/post-a-job`, data);
+
+                showToast(response.message || "Success!", "success", 3000);
+                form.reset();
+                progressBar.style.width = "0%";
+                progressText.textContent = "0%";
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch (error) {
+                handleSubmissionError(error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        }
+
+        if (form) {
+            setupDynamicFields('requirements-container', 'add-requirement', 'requirements[]', 'e.g. Java Skill');
+            setupDynamicFields('benefits-container', 'add-benefit', 'benefits[]', 'e.g. Insurance');
+            setupDynamicFields('description-container', 'add-description', 'description[]', 'e.g. Key responsibility');
+            form.addEventListener('submit', handleSubmit);
+            updateProgress();
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Find Your Dream Job</title>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/Home.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Home.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* ===== UPDATED TO RED-ORANGE THEME ===== */
+        :root {
+            --primary-color: #ff4500; /* ✅ Already red-orange */
+            --secondary-color: #ff6b35; /* ✅ Changed from blue to orange */
+            --accent-color: #28a745;
+            --dark-color: #2c3e50;
+            --light-color: #fff5f2; /* ✅ Changed to warm light */
+            --border-color: #f4e6e0; /* ✅ Warm border */
+            --shadow-light: 0 2px 10px rgba(255,69,0,0.1); /* ✅ Orange shadow */
+            --shadow-medium: 0 4px 15px rgba(255,69,0,0.15);
+            --shadow-heavy: 0 8px 25px rgba(255,69,0,0.2);
+        }
+
+        /* ✅ Hero Section - Changed from purple to red-orange */
+        .hero-section {
+            background: linear-gradient(135deg, #ff8040 0%, #fc4a1a 100%);
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 0;
+        }
+
+        .hero-section .display-4 {
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-section .lead {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            margin-top: -3rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow-medium);
+            border: none;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.875rem;
+        }
+
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.1;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        /* Search Form Enhanced */
+        .search-section {
+            background: var(--light-color); /* ✅ Warm background */
+            padding: 4rem 0;
+        }
+
+        .search-form-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color); /* ✅ Warm border */
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .search-form-modern .form-control-lg,
+        .search-form-modern .form-select-lg {
+            padding: 0.875rem 1.125rem;
+            border-radius: 12px;
+            border: 2px solid #f4e6e0; /* ✅ Warm border */
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-form-modern .form-control-lg:focus,
+        .search-form-modern .form-select-lg:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 69, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-custom-search {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff6b35 100%);
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom-search:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            background: linear-gradient(135deg, #ff6b35 0%, var(--primary-color) 100%);
+        }
+
+        /* Job Cards Enhanced */
+        .job-listing-section {
+            padding: 5rem 0;
+            background: white;
+        }
+
+        .section-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            position: relative;
+            padding-bottom: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .section-title::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); /* ✅ Orange gradient */
+            border-radius: 2px;
+        }
+
+        .jobs-header {
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%); /* ✅ Warm gradient */
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 3rem;
+        }
+
+        .job-card-modern {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            background: white;
+        }
+
+        .job-card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .job-card-modern .card-body {
+            padding: 1.75rem;
+        }
+
+        .company-logo {
+            width: 65px;
+            height: 65px;
+            border-radius: 15px;
+            object-fit: cover;
+            border: 3px solid #f8f9fa;
+            box-shadow: var(--shadow-light);
+        }
+
+        .job-title-modern {
+            font-weight: 700;
+            color: var(--dark-color);
+            font-size: 1.1rem;
+            line-height: 1.3;
+            margin-bottom: 0.5rem;
+        }
+
+        .company-name-modern {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .location-modern {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .location-modern i {
+            color: var(--primary-color);
+        }
+
+        .job-meta {
+            padding: 1rem 0;
+            border-top: 1px solid #f8f9fa;
+            border-bottom: 1px solid #f8f9fa;
+            margin: 1rem 0;
+        }
+
+        .job-badge {
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%); /* ✅ Warm badge */
+            color: var(--dark-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0.2rem;
+            display: inline-block;
+            border: 1px solid var(--border-color);
+        }
+
+        .job-badge.salary {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* ✨ [NEW] Animation for Trending Badge */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .requirements-preview {
+            background: #fff8f6; /* ✅ Warm background */
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .requirements-preview h6 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .requirements-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .requirements-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .job-footer {
+            border-top: 2px solid #f8f9fa;
+            padding-top: 1.5rem;
+            margin-top: auto;
+        }
+
+        .job-dates {
+            background: #fff8f6; /* ✅ Warm background */
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .job-dates small {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .job-dates .posted-date {
+            color: var(--secondary-color); /* ✅ Orange color */
+        }
+
+        .job-dates .deadline-date {
+            color: var(--primary-color);
+        }
+
+        .btn-view-details-modern,
+        .btn-apply-now-modern {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-view-details-modern {
+            border: 2px solid var(--secondary-color); /* ✅ Orange border */
+            color: var(--secondary-color);
+            background: white;
+        }
+
+        .btn-view-details-modern:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-apply-now-modern {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff6b35 100%);
+            border: 2px solid var(--primary-color);
+            color: white;
+        }
+
+        .btn-apply-now-modern:hover {
+            background: linear-gradient(135deg, #ff6b35 0%, var(--primary-color) 100%);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+            color: white;
+        }
+
+        /* Services Section Enhanced */
+        .service-section {
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%); /* ✅ Warm gradient */
+            padding: 5rem 0;
+        }
+
+        .service-item-modern {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem 1.5rem;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            text-align: center;
+            height: 100%;
+        }
+
+        .service-item-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .service-icon-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #fff8f6 100%); /* ✅ Warm gradient */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light);
+        }
+
+        .service-img-modern {
+            max-width: 80px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+
+        .service-item-modern h5 {
+            color: var(--dark-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .service-item-modern h5 i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .service-item-modern p {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        /* ✅ Video Section - Changed to red-orange gradient */
+        .video-section {
+            background: linear-gradient(135deg, #ff8040 0%, #fc4a1a 100%);
+            padding: 5rem 0;
+            color: white;
+        }
+
+        .video-section .section-title {
+            color: white;
+        }
+
+        .video-section .section-title::after {
+            background: linear-gradient(90deg, white, rgba(255,255,255,0.7));
+        }
+
+        .video-wrapper {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .self-hosted-video {
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+            border-radius: 20px;
+            display: block;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .btn-cta-large {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff6b35 100%);
+            color: white;
+            padding: 1.25rem 3rem;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+            box-shadow: var(--shadow-medium);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cta-large:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-heavy);
+            background: linear-gradient(135deg, #ff6b35 0%, var(--primary-color) 100%);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 2rem 0;
+            }
+
+            .stats-container {
+                margin-top: -1.5rem;
+            }
+
+            .search-form-wrapper {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .job-card-modern .card-body {
+                padding: 1.25rem;
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading States */
+        .loading-placeholder {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #fff8f6; /* ✅ Warm background */
+            border-radius: 15px;
+            border: 2px dashed #f4e6e0; /* ✅ Warm border */
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #f4e6e0;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h5 {
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+<!-- Header -->
+<div th:replace="fragments/headerAndFooter :: header"></div>
+
+<!-- ✅ NEW: Container for Flash Messages from Redirects -->
+<div th:if="${session_error_message}" id="flash-message-container" style="display: none;"
+     th:attr="data-type='error', data-message=${session_error_message}">
+</div>
+
+<!-- Slider -->
+<section class="slider-container">
+    <div th:replace="fragments/headerAndFooter :: slider"></div>
+</section>
+
+<!-- Main Content -->
+<main>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-4 fade-in">Find Your Dream Career</h1>
+            <p class="lead mb-0 fade-in">
+                Join thousands of professionals who found their perfect job through our platform
+            </p>
+            <p class="lead fade-in">
+                <span class="fw-bold" th:text="${homeData.totalJobs ?: 0}">0</span> opportunities waiting for you
+            </p>
+        </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <section class="stats-container">
+        <div class="container">
+            <div class="row g-4 slide-up">
+                <div class="col-md-4">
+                    <div class="stats-card position-relative">
+                        <i class="fas fa-briefcase stats-icon text-primary"></i>
+                        <div class="stats-number text-primary" th:text="${homeData.totalJobs ?: 0}">0</div>
+                        <div class="stats-label">Active Jobs</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card position-relative">
+                        <i class="fas fa-fire stats-icon text-warning"></i>
+                        <!-- Hiển thị số lượng Job có Trending Score > 50 (Giả lập hoặc lấy từ backend nếu có) -->
+                        <div class="stats-number text-warning" th:text="${homeData.featuredJobs ?: 0}">0</div>
+                        <div class="stats-label">Trending Jobs</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card position-relative">
+                        <i class="fas fa-building stats-icon text-success"></i>
+                        <div class="stats-number text-success">150+</div>
+                        <div class="stats-label">Companies</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 class="section-title">Start Your Job Search</h2>
+                <p class="lead text-muted">Use our advanced filters to find the perfect opportunity</p>
+            </div>
+
+            <div class="search-form-wrapper slide-up">
+                <form th:action="@{/jobseeker/job-search}" method="GET" class="search-form-modern">
+                    <div class="row g-4">
+                        <div class="col-md-6 col-xl-3">
+                            <label for="keyword" class="form-label fw-semibold">
+                                <i class="fas fa-search me-2 text-primary"></i>Keywords
+                            </label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="keyword"
+                                   name="keyword"
+                                   th:value="${keyword}"
+                                   placeholder="Job title, company, skills...">
+                        </div>
+
+                        <div class="col-md-6 col-xl-3">
+                            <label for="location" class="form-label fw-semibold">
+                                <i class="fas fa-map-marker-alt me-2 text-primary"></i>Location
+                            </label>
+                            <select class="form-select form-select-lg" id="location" name="location">
+                                <option value="">All Locations</option>
+                                <option th:each="loc : ${T(com.example.baoNgoCv.model.enums.LocationType).values()}"
+                                        th:value="${loc}"
+                                        th:text="${loc.displayName}"
+                                        th:selected="${location == loc.name()}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-xl-3">
+                            <label for="experience" class="form-label fw-semibold">
+                                <i class="fas fa-user-graduate me-2 text-primary"></i>Experience
+                            </label>
+                            <select class="form-select form-select-lg" id="experience" name="experience">
+                                <option value="">Any Experience</option>
+                                <option th:each="level : ${T(com.example.baoNgoCv.model.enums.ExperienceLevel).values()}"
+                                        th:value="${level}"
+                                        th:text="${level.displayName}"
+                                        th:selected="${experience == level.name()}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-xl-3">
+                            <label for="salaryRange" class="form-label fw-semibold">
+                                <i class="fas fa-dollar-sign me-2 text-primary"></i>Salary Range
+                            </label>
+                            <select class="form-select form-select-lg" id="salaryRange" name="salaryRange">
+                                <option value="">Any Salary</option>
+                                <option th:each="salary : ${T(com.example.baoNgoCv.model.enums.SalaryRange).values()}"
+                                        th:value="${salary}"
+                                        th:text="${salary.displayName}"
+                                        th:selected="${salaryRange == salary.name()}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button type="submit" id="searchButton" class="btn btn-custom-search btn-lg px-5">
+                                <i class="fas fa-search me-2"></i>
+                                Search Dream Jobs
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="searchingError alert alert-danger mt-3" style="display: none"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Jobs Section -->
+    <section class="job-listing-section">
+        <div class="container">
+            <!-- Section Header -->
+            <div class="jobs-header slide-up">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <!-- ✨ [NEW] Updated Title -->
+                        <h2 class="section-title mb-0 text-start">🔥 Trending Opportunities</h2>
+                        <p class="text-muted mb-0 mt-2">Jobs with the most views and applications this week</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex justify-content-md-end gap-3">
+                            <div class="badge bg-primary fs-6 p-2">
+                                <i class="fas fa-fire me-1"></i>
+                                <span th:text="${homeData.featuredJobs ?: 0}">0</span> Trending
+                            </div>
+                            <div class="badge bg-success fs-6 p-2">
+                                <i class="fas fa-briefcase me-1"></i>
+                                <span th:text="${homeData.totalJobs ?: 0}">0</span> Total
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Cards Grid -->
+            <div class="row gy-4 fade-in">
+                <!-- Empty State -->
+                <div th:if="${homeData.jobCards == null or homeData.jobCards.isEmpty()}" class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-search-minus"></i>
+                        <h5>No Featured Jobs Available</h5>
+                        <p class="mb-3">We're working hard to bring you the best opportunities. Check back soon!</p>
+                        <a href="/jobseeker/job-search" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Browse All Jobs
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Job Cards -->
+                <div th:each="job, iterStat : ${homeData.jobCards}"
+                     class="col-lg-4 col-md-6 d-flex align-items-stretch"
+                     th:style="'animation-delay: ' + ${iterStat.index * 0.1} + 's'">
+                    <div class="card job-card-modern w-100 fade-in">
+                        <div class="card-body d-flex flex-column">
+                            <!-- Company & Job Header -->
+                            <div class="d-flex align-items-start mb-3">
+                                <img th:src="${job.companyLogo}"
+                                     th:alt="${job.companyName}"
+                                     class="company-logo me-3"
+                                     onerror="this.src='/img/default-company.png'">
+                                <div class="flex-grow-1">
+                                    <h5 class="job-title-modern" th:text="${job.title}">Software Engineer</h5>
+                                    <p class="company-name-modern mb-1" th:text="${job.companyName}">Tech Company</p>
+                                    <div class="location-modern">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <span th:text="${job.location?.displayName ?: 'Location TBD'}">Remote</span>
+                                    </div>
+                                </div>
+
+                                <!-- ✨ [NEW] Trending Badge with Animation -->
+                                <div class="text-end" th:if="${job.isTrending}">
+                                    <div class="badge bg-danger animate-pulse" title="High interest job">
+                                        <i class="fas fa-fire me-1"></i> HOT
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ✨ [NEW] Social Proof (Views & Applicants) -->
+                            <div class="d-flex gap-3 mb-3 text-muted small bg-light p-2 rounded">
+                                <span th:if="${job.viewCount > 0}" title="Total views">
+                                    <i class="fas fa-eye text-primary me-1"></i>
+                                    <span th:text="${job.viewCount}">123</span> views
+                                </span>
+                                <span th:if="${job.applicantCount > 0}" title="Total applications">
+                                    <i class="fas fa-user-friends text-success me-1"></i>
+                                    <span th:text="${job.applicantCount}">10</span> applicants
+                                </span>
+                            </div>
+
+                            <!-- Job Meta Info -->
+                            <div class="job-meta">
+                                <div class="d-flex flex-wrap gap-1">
+                                    <span class="job-badge" th:text="${job.jobType?.displayName ?: 'Full-time'}">Full-time</span>
+                                    <span class="job-badge" th:text="${job.experience?.displayName ?: 'Any Level'}">Junior</span>
+                                    <span class="job-badge salary" th:text="${job.salaryRange?.displayName ?: 'Competitive'}">$1000-2000</span>
+                                </div>
+                            </div>
+
+                            <!-- Requirements Preview -->
+                            <div class="requirements-preview" th:if="${job.topRequirements != null and !job.topRequirements.isEmpty()}">
+                                <h6><i class="fas fa-list-check me-2"></i>Key Requirements</h6>
+                                <ul class="requirements-list">
+                                    <li th:each="req : ${job.topRequirements}"
+                                        th:text="${req}"
+                                        class="text-truncate">Java Programming</li>
+                                </ul>
+                            </div>
+
+                            <!-- Job Footer -->
+                            <div class="job-footer mt-auto">
+                                <!-- Dates -->
+                                <div class="job-dates mb-3">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="d-block">
+                                                <i class="fas fa-calendar-plus me-1 posted-date"></i>
+                                                Posted: <span th:text="${#temporals.format(job.postedDate, 'MMM dd')}" class="posted-date">Jan 15</span>
+                                            </small>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <small class="d-block">
+                                                <i class="fas fa-clock me-1 deadline-date"></i>
+                                                Deadline: <span th:text="${#temporals.format(job.applicationDeadline, 'MMM dd')}" class="deadline-date">Feb 15</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <a th:href="@{/jobseeker/job-detail/{id}(id=${job.id})}"
+                                       class="btn btn-view-details-modern flex-fill text-center">
+                                        <i class="fas fa-eye me-1"></i>Details
+                                    </a>
+                                    <!-- Logic for Company Accounts -->
+                                    <a sec:authorize="hasRole('COMPANY')"
+                                       href="#"
+                                       onclick="event.preventDefault(); showToast('This feature is not available for company accounts.', 'warning');"
+                                       class="btn btn-apply-now-modern flex-fill text-center">
+                                        <i class="fas fa-paper-plane me-1"></i>Apply
+                                    </a>
+                                    <!-- Logic for Job Seekers or Anonymous Users -->
+                                    <a sec:authorize="!hasRole('COMPANY')"
+                                       th:href="@{/jobseeker/apply-job/{id}(id=${job.id})}"
+                                       class="btn btn-apply-now-modern flex-fill text-center"
+                                       th:onclick="${!#authorization.expression('isAuthenticated()')} ? 'showLoginNotification(event)' : null">
+                                        <i class="fas fa-paper-plane me-1"></i>Apply
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section mt-5 slide-up">
+                <div class="text-center">
+                    <h4 class="mb-3">Ready to Find More Opportunities?</h4>
+                    <p class="text-muted mb-4">
+                        Explore our complete job database with advanced filters and personalized recommendations
+                    </p>
+                    <a href="/jobseeker/job-search" class="btn-cta-large">
+                        <i class="fas fa-rocket me-2"></i>
+                        Explore All !
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="service-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Why Choose BaoNgoCv?</h2>
+                <p class="lead text-muted">Comprehensive career solutions tailored for your success</p>
+            </div>
+
+            <div class="row g-4 slide-up">
+                <div class="col-lg-4 col-md-6">
+                    <div class="service-item-modern">
+                        <div class="service-icon-wrapper">
+                            <img src="/img/service/search.png" alt="Job Search" class="service-img-modern">
+                        </div>
+                        <h5><i class="fas fa-search"></i>Smart Job Matching</h5>
+                        <p>Our AI-powered algorithm matches you with jobs that perfectly fit your skills, experience, and career goals.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="service-item-modern">
+                        <div class="service-icon-wrapper">
+                            <img src="/img/service/cvwriting.png" alt="CV Writing" class="service-img-modern">
+                        </div>
+                        <h5><i class="fas fa-file-alt"></i>Professional CV Builder</h5>
+                        <p>Create stunning, ATS-friendly resumes with our professional templates and expert guidance.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="service-item-modern">
+                        <div class="service-icon-wrapper">
+                            <img src="/img/service/advice.png" alt="Career Advice" class="service-img-modern">
+                        </div>
+                        <h5><i class="fas fa-user-tie"></i>Career Coaching</h5>
+                        <p>Get personalized career advice from industry experts to accelerate your professional growth.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section class="video-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">See How We Transform Careers</h2>
+                <p class="lead opacity-90">Watch success stories from professionals who found their dream jobs through our platform</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-xl-10">
+                    <div class="video-wrapper slide-up">
+                        <video class="self-hosted-video" controls muted playsinline poster="/img/video/video-poster.jpg">
+                            <source th:src="@{/img/video/video-quang-cao.mp4}" type="video/mp4">
+                            <p class="text-center p-4">
+                                Your browser doesn't support video playback.
+                                <a href="/img/video/video-quang-cao.mp4" class="text-white">Download the video</a>
+                            </p>
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<div th:replace="fragments/headerAndFooter :: footer"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function showLoginNotification(event) {
+        showToast('You will be redirected to the login page to apply', 'info');
+        setTimeout(() => {
+            window.location.href = event.target.closest('a').href;
+        }, 1500);
+        event.preventDefault();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const flashContainer = document.getElementById('flash-message-container');
+        if (flashContainer) {
+            const message = flashContainer.getAttribute('data-message');
+            const type = flashContainer.getAttribute('data-type');
+            showToast(message, type, 7000);
+        }
+
+        const searchButton = document.getElementById('searchButton');
+        const formInputs = [
+            document.getElementById('keyword'),
+            document.getElementById('location'),
+            document.getElementById('experience'),
+            document.getElementById('salaryRange')
+        ];
+
+        function checkFormCompletion() {
+            const hasValue = formInputs.some(input =>
+                input && (input.value && input.value.trim() !== '')
+            );
+            if (searchButton) {
+                searchButton.disabled = !hasValue;
+                if (hasValue) {
+                    searchButton.classList.remove('btn-secondary');
+                    searchButton.classList.add('btn-custom-search');
+                } else {
+                    searchButton.classList.remove('btn-custom-search');
+                    searchButton.classList.add('btn-secondary');
+                }
+            }
+        }
+
+        formInputs.forEach(input => {
+            if (input) {
+                const eventType = input.type === 'select-one' ? 'change' : 'input';
+                input.addEventListener(eventType, checkFormCompletion);
+            }
+        });
+
+        checkFormCompletion();
+
+        // Smooth scrolling and animations
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in, .slide-up').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+    });
+</script>
+</body>
+</html>

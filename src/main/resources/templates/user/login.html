@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BaoNgoCv</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* ================================
+           PAGE SPECIFIC STYLES
+           ================================ */
+
+        body {
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-page-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Background Shapes */
+        .shape-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 10s infinite ease-in-out;
+        }
+        .shape-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: rgba(255, 107, 53, 0.2); }
+        .shape-2 { bottom: -10%; right: -10%; width: 400px; height: 400px; background: rgba(255, 159, 67, 0.15); }
+        .shape-3 { top: 40%; right: 20%; width: 300px; height: 300px; background: rgba(255, 82, 82, 0.1); }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* === MAIN CARD === */
+        .login-card {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 50px rgba(255, 107, 53, 0.15);
+            overflow: hidden;
+            animation: zoomIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* === LEFT SIDE: FORM === */
+        .login-form-section {
+            padding: 3.5rem 3rem;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .brand-title span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Modern Inputs */
+        .form-floating > .form-control {
+            border-radius: 16px;
+            border: 2px solid #f1f5f9;
+            background: rgba(255, 255, 255, 0.8);
+            height: 3.5rem;
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+        }
+
+        .form-floating > label {
+            padding-left: 1rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+        }
+
+        .form-floating > label i {
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        /* Submit Button */
+        .login-submit-btn {
+            height: 3.5rem;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            background: var(--primary-gradient);
+            border: none;
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.25);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .login-submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.4);
+            background: linear-gradient(135deg, #e03e00 0%, #ff6b35 100%);
+        }
+
+        /* Checkbox */
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Links */
+        .forgot-password-link {
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .forgot-password-link:hover {
+            color: var(--primary-color);
+        }
+
+        .register-link {
+            color: var(--primary-color);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .register-link:hover { text-decoration: underline; }
+
+        /* === RIGHT SIDE: NOTIFICATIONS (ORANGE PANEL) === */
+        .info-panel {
+            background: var(--primary-gradient);
+            padding: 3.5rem 2.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Decorative Circles */
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .info-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -10%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Glass List Items */
+        .notification-list {
+            position: relative;
+            z-index: 2;
+        }
+
+        .glass-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease, background 0.3s ease;
+            color: white;
+        }
+
+        .glass-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .glass-item h6 {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
+        }
+
+        .glass-item p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .badge-glass {
+            background: white;
+            color: var(--primary-color);
+            font-weight: 700;
+            border-radius: 20px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .login-card { flex-direction: column; }
+            .info-panel { padding: 2.5rem; }
+            .login-form-section { padding: 2.5rem 1.5rem; }
+        }
+    </style>
+</head>
+
+<body>
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<div class="shape-blob shape-1"></div>
+<div class="shape-blob shape-2"></div>
+<div class="shape-blob shape-3"></div>
+
+<main class="login-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+
+                <div class="login-card d-flex">
+
+                    <div class="col-lg-6 login-form-section d-flex flex-column justify-content-center">
+                        <div class="login-form-container">
+
+                            <div class="mb-4 text-center text-lg-start">
+                                <div class="d-inline-block mb-3 p-3 rounded-circle" style="background: rgba(255, 107, 53, 0.1);">
+                                    <i class="fas fa-user-astronaut fa-2x text-gradient-primary" style="color: var(--primary-color)"></i>
+                                </div>
+                                <h2 class="brand-title">Welcome <span>Back!</span></h2>
+                                <p class="text-muted">Enter your credentials to access your workspace.</p>
+                            </div>
+
+                            <div th:if="${param.error}" class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center" role="alert">
+                                <i class="fas fa-exclamation-circle fs-4 me-3"></i>
+                                <div>
+                                    <strong>Oops!</strong> Invalid username or password.
+                                </div>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                            </div>
+
+                            <div th:if="${param.logout}" class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center" role="alert">
+                                <i class="fas fa-check-circle fs-4 me-3"></i>
+                                <div>
+                                    <strong>Success!</strong> You have been logged out.
+                                </div>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                            </div>
+
+                            <form th:action="@{/login-action}" method="POST">
+                                <input type="hidden" name="redirectUrl" th:value="${redirectUrl}" />
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="username" name="username" th:value="${username}" placeholder="Username" required>
+                                    <label for="username"><i class="fas fa-envelope me-2"></i> Username or Email</label>
+                                </div>
+
+                                <div class="form-floating mb-4">
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                    <label for="password"><i class="fas fa-lock me-2"></i> Password</label>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
+                                        <label class="form-check-label text-muted" for="remember-me">Remember me</label>
+                                    </div>
+                                    <a href="/user/forget-password" class="forgot-password-link text-decoration-none">Forgot password?</a>
+                                </div>
+
+                                <div class="d-grid mb-4">
+                                    <button type="submit" class="btn btn-primary login-submit-btn">
+                                        <span>Sign In</span>
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+
+                                <div class="text-center">
+                                    <p class="text-muted mb-0">Don't have an account?
+                                        <a href="/user/register" class="register-link">Register now</a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 info-panel d-none d-lg-flex">
+                        <h3 class="panel-title">
+                            <i class="fas fa-bell"></i> Latest Updates
+                        </h3>
+
+                        <div class="notification-list w-100">
+
+                            <div class="glass-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0"><i class="fas fa-tools me-2"></i> System Maintenance</h6>
+                                    <span class="badge-glass">New</span>
+                                </div>
+                                <p>The system will be under scheduled maintenance on September 15 from 2:00 AM to 4:00 AM.</p>
+                            </div>
+
+                            <div class="glass-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0"><i class="fas fa-search-dollar me-2"></i> New Feature: Salary Search</h6>
+                                    <span class="badge-glass">Update</span>
+                                </div>
+                                <p>You can now filter job searches by salary range and precise location coordinates.</p>
+                            </div>
+
+                            <div class="glass-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0"><i class="fas fa-user-edit me-2"></i> Profile Reminder</h6>
+                                    <span class="badge-glass">Tip</span>
+                                </div>
+                                <p>Completing your profile increases your chances of being scouted by top employers by 40%.</p>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-auto text-center opacity-75 text-white small">
+                            &copy; 2025 BaoNgoCv Platform. Secure Login.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

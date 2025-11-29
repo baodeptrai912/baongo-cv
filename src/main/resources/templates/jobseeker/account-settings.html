@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <title>Account Settings | BaoNgoCv</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/whole.css}">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script th:src="@{/js/FetchNotification.js}" defer></script>
+    <script th:src="@{/js/Toast.js}" defer></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* --- GIỮ NGUYÊN CSS GIAO DIỆN ĐẸP --- */
+        :root {
+            --primary-color: #ff6b35;
+            --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            --primary-hover: linear-gradient(135deg, #e03e00 0%, #c73500 100%);
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .account-settings-wrapper {
+            display: flex;
+            gap: 2rem;
+            padding: 3rem 0;
+            align-items: flex-start;
+        }
+
+        /* Sidebar */
+        .settings-sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 100px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .settings-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            color: var(--text-gray);
+            font-weight: 500;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .settings-sidebar .nav-link:hover {
+            background-color: #fff7ed;
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .settings-sidebar .nav-link i { margin-right: 1rem; width: 20px; text-align: center; }
+
+        .settings-sidebar .nav-link.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .settings-sidebar .nav-link.text-danger:hover { background-color: #fef2f2; color: #dc2626; }
+
+        /* Content Area */
+        .settings-content {
+            flex: 1;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 2.5rem;
+            border: 1px solid #e2e8f0;
+            /* ✨ [FIX] Set a minimum height to prevent footer jumping when switching sections */
+            min-height: 600px;
+        }
+
+        .content-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .section-subtitle { color: var(--text-gray); margin-bottom: 2rem; font-size: 0.95rem; }
+
+        /* Forms & Buttons */
+        .form-label { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); margin-bottom: 0.5rem; }
+        .form-control { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; transition: 0.2s; }
+        .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1); }
+
+        .btn-save-settings {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(255, 107, 53, 0.2);
+        }
+        .btn-save-settings:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 107, 53, 0.3); background: var(--primary-hover); color: white; }
+        .btn-save-settings:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        /* Danger Zone */
+        .danger-zone { border: 1px solid #fecaca; background-color: #fef2f2; border-radius: 16px; padding: 2rem; }
+        .danger-title { color: #991b1b; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .btn-danger-custom { background: white; border: 1px solid #ef4444; color: #ef4444; padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600; transition: 0.2s; }
+        .btn-danger-custom:hover:not(:disabled) { background: #ef4444; color: white; }
+        .btn-danger-custom:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Verification Box */
+        .verification-box {
+            background: #fff7ed;
+            border: 1px dashed var(--primary-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .verification-code-input { font-size: 2rem; letter-spacing: 1rem; text-align: center; max-width: 300px; margin: 1.5rem auto; border: 2px solid #e2e8f0; font-weight: 700; }
+
+        /* Overlays */
+        #fullPageLoadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        #fullPageLoadingOverlay.show { display: flex; }
+
+        .redirect-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none; justify-content: center; align-items: center; color: white; text-align: center; }
+        .redirect-overlay.show { display: flex; }
+
+        .error-message { color: #dc3545; font-size: 0.875em; margin-top: 0.5rem; display: none; }
+        .is-invalid { border-color: #dc3545 !important; }
+
+        @media (max-width: 992px) {
+            .account-settings-wrapper { flex-direction: column; }
+            .settings-sidebar { width: 100%; position: static; margin-bottom: 1.5rem; }
+            .settings-sidebar .nav { flex-direction: row; overflow-x: auto; padding-bottom: 5px; }
+            .settings-sidebar .nav-link { white-space: nowrap; margin-right: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main class="flex-grow-1">
+    <div class="container account-settings-wrapper">
+
+        <aside class="settings-sidebar">
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="#profileInfoSection" data-section="profileInfoSection">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </a>
+                <a class="nav-link" href="#changePasswordSection" data-section="changePasswordSection">
+                    <i class="fas fa-lock"></i> Change Password
+                </a>
+                <a class="nav-link" href="#notificationSettingsSection" data-section="notificationSettingsSection">
+                    <i class="fas fa-bell"></i> Notifications
+                </a>
+                <a class="nav-link" href="#privacySettingsSection" data-section="privacySettingsSection">
+                    <i class="fas fa-user-shield"></i> Privacy Settings
+                </a>
+                <hr class="my-2">
+                <a class="nav-link text-danger" href="#deleteAccountSection" data-section="deleteAccountSection">
+                    <i class="fas fa-trash-alt"></i> Delete Account
+                </a>
+            </nav>
+        </aside>
+
+        <section class="settings-content">
+
+            <div id="profileInfoSection" class="content-section active">
+                <h2 class="section-title">Personal Profile</h2>
+                <p class="section-subtitle">Update your personal information and resume details.</p>
+                <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                    <div class="mb-3"><i class="fas fa-id-card fa-3x text-secondary opacity-50"></i></div>
+                    <h5 class="fw-bold">Detailed Profile Editor</h5>
+                    <p class="text-muted mb-4">Edit your work experience, education, and skills in our dedicated editor.</p>
+                    <a th:href="@{/jobseeker/profile-update}" class="btn btn-save-settings">
+                        Go to Profile Editor <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div id="changePasswordSection" class="content-section">
+                <h2 class="section-title">Change Password</h2>
+                <p class="section-subtitle">Ensure your account is secure with a strong password.</p>
+
+                <div id="passwordChangeFormContainer">
+                    <form id="changePasswordForm" class="mt-4" style="max-width: 500px;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                            <div id="currentPasswordError" class="error-message"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                            <div id="newPasswordError" class="error-message"></div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmNewPassword" name="confirmedNewPassword" required>
+                            <div id="confirmNewPasswordError" class="error-message"></div>
+                        </div>
+                        <button type="submit" class="btn btn-save-settings" id="updatePasswordButton">Update Password</button>
+                    </form>
+                </div>
+
+                <div id="emailVerificationContainer" class="d-none verification-box">
+                    <div class="mb-3"><i class="fas fa-envelope-open-text fa-2x text-primary"></i></div>
+                    <h4 class="fw-bold">Verify Your Email</h4>
+                    <p class="text-muted mb-4">We sent a 6-digit code to <strong id="userEmailForVerification"></strong></p>
+
+                    <form id="emailVerificationForm">
+                        <input type="text" class="form-control verification-code-input" id="verificationCode" name="code" placeholder="000000" maxlength="6" required autocomplete="off">
+                        <div id="verificationCodeError" class="error-message text-center d-block mt-2"></div>
+                        <button type="submit" class="btn btn-save-settings w-100 mt-3" id="verifyEmailButton">Verify & Change</button>
+                    </form>
+
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" id="resendCodeButton">Resend Code</button>
+                        <span id="countdownTimer" class="badge bg-secondary rounded-pill ms-2" style="display: none;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="notificationSettingsSection" class="content-section">
+                <h2 class="section-title">Notification Preferences</h2>
+                <p class="section-subtitle">Manage how you receive updates.</p>
+                <form id="notificationSettingsForm" class="mt-4">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">Application Updates</h6>
+                                <p class="text-muted small mb-0">Receive emails when employers update your application status.</p>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" style="width: 3em; height: 1.5em; cursor:pointer;"
+                                       id="emailApplicationUpdates" name="emailApplicationUpdates"
+                                       th:checked="${currentEmailNotificationSetting}">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="privacySettingsSection" class="content-section">
+                <h2 class="section-title">Privacy Control</h2>
+                <p class="section-subtitle">Control who can see your profile.</p>
+                <form id="privacySettingsForm" class="mt-4" style="max-width: 400px;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="mb-3">
+                        <label class="form-label">Profile Visibility</label>
+                        <select class="form-select" id="profileVisibility" name="profileVisibility">
+                            <option value="PUBLIC" th:selected="${currentProfileVisibility == 'PUBLIC'}">Public (Visible to Employers)</option>
+                            <option value="PRIVATE" th:selected="${currentProfileVisibility == 'PRIVATE'}">Private (Only me)</option>
+                        </select>
+                        <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i> Public profiles can be searched by recruiters.</div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="deleteAccountSection" class="content-section">
+                <h2 class="section-title text-danger">Delete Account</h2>
+                <p class="section-subtitle">Permanently remove your account.</p>
+
+                <div id="deleteFormContainer" class="danger-zone">
+                    <h5 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Warning</h5>
+                    <p class="small text-secondary mb-4">
+                        Deleting your account is irreversible. All your applications, saved jobs, and profile data will be lost.
+                    </p>
+
+                    <form id="deleteAccountForm">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="mb-3">
+                            <label class="form-label text-danger">Confirm Password</label>
+                            <input type="password" class="form-control" id="deleteConfirmPassword" name="password" placeholder="Enter password to confirm" required>
+                            <div id="deleteConfirmPasswordError" class="error-message"></div>
+                        </div>
+                        <div class="form-check mb-4">
+                            <input class="form-check-input border-danger" type="checkbox" id="confirmDeleteCheckbox" required>
+                            <label class="form-check-label small text-danger fw-bold" for="confirmDeleteCheckbox">
+                                I understand the consequences and want to delete my account.
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-danger-custom" id="deleteAccountButton" disabled>Delete My Account</button>
+                    </form>
+                </div>
+
+                <div id="emailVerificationDeleteContainer" class="d-none verification-box" style="background: #fff5f5; border-color: #fc8181;">
+                    <div class="alert alert-warning d-inline-block text-start">
+                        <i class="fas fa-envelope me-2"></i> We sent a code to <strong id="deleteAccountEmailDisplay"></strong>
+                    </div>
+
+                    <form id="emailVerificationDeleteForm" class="mt-3">
+                        <input type="text" class="form-control verification-code-input border-danger text-danger mx-auto"
+                               id="deleteAccountVerificationCode" name="code" placeholder="000000" maxlength="6" required>
+                        <div id="deleteAccountVerificationCodeError" class="error-message text-center d-block mt-2"></div>
+
+                        <button type="submit" class="btn btn-danger mt-3 px-5 rounded-pill" id="verifyDeleteButton">
+                            Confirm Deletion
+                        </button>
+                    </form>
+
+                    <div class="mt-3">
+                        <button class="btn btn-link text-muted btn-sm" id="resendDeleteCodeButton">Resend Code</button>
+                        <span id="deleteCountdownTimer" class="small text-muted" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<div id="redirectOverlay" class="redirect-overlay">
+    <div>
+        <i class="fas fa-check-circle fa-4x mb-3 text-success"></i>
+        <h3>Account Deleted</h3>
+        <p>Redirecting to homepage...</p>
+    </div>
+</div>
+
+<div id="fullPageLoadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        // --- Helpers ---
+        function clearErrors(...fieldIds) {
+            fieldIds.forEach(id => {
+                const errorDiv = document.getElementById(`${id}Error`);
+                const field = document.getElementById(id);
+                if (errorDiv) { errorDiv.textContent = ''; errorDiv.style.display = 'none'; }
+                if (field) field.classList.remove('is-invalid');
+            });
+        }
+
+        function showError(fieldId, message) {
+            const errorDiv = document.getElementById(`${fieldId}Error`);
+            const field = document.getElementById(fieldId);
+            if (errorDiv) { errorDiv.textContent = message; errorDiv.style.display = 'block'; }
+            if (field) field.classList.add('is-invalid');
+        }
+
+        function showFullPageLoading() { document.getElementById('fullPageLoadingOverlay').classList.add('show'); }
+        function hideFullPageLoading() { document.getElementById('fullPageLoadingOverlay').classList.remove('show'); }
+
+        // --- USE EXTERNAL SHOW TOAST (From Toast.js) ---
+        // Assuming Toast.js exports a global function showToast(message, type)
+        // If it uses Toast.fire(), we can wrap it:
+        function triggerToast(message, type = 'success') {
+            if (typeof showToast === 'function') {
+                showToast(message, type); // Call your existing Toast.js function
+            } else if (typeof Toast !== 'undefined' && typeof Toast.fire === 'function') {
+                Toast.fire({ icon: type, title: message });
+            } else {
+                alert(message); // Fallback
+            }
+        }
+
+        function performPostRedirect(url) {
+            const form = document.createElement('form');
+            form.method = 'POST'; form.action = url; form.style.display = 'none';
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden'; csrfInput.name = csrfHeader; csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // --- Navigation UI ---
+        const navLinks = document.querySelectorAll('.settings-sidebar .nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('data-section');
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                contentSections.forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                if(window.innerWidth < 992) document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // --- Settings API Calls ---
+        const emailNotificationCheckbox = document.getElementById('emailApplicationUpdates');
+        if (emailNotificationCheckbox) {
+            emailNotificationCheckbox.addEventListener('change', async function () {
+                const enabled = this.checked;
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/jobseeker/notification-settings', {
+                        method: 'PUT',
+                        headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ emailOnApplicationUpdate: enabled })
+                    });
+                    if (response.ok) triggerToast('Settings updated', 'success');
+                    else { this.checked = !enabled; triggerToast('Update failed', 'error'); }
+                } catch (error) { this.checked = !enabled; triggerToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        const profileVisibilitySelect = document.getElementById('profileVisibility');
+        if (profileVisibilitySelect) {
+            profileVisibilitySelect.addEventListener('change', async function () {
+                const visibility = this.value;
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/jobseeker/privacy', {
+                        method: 'PUT',
+                        headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ profilePublic: visibility === 'PUBLIC' })
+                    });
+                    if (response.ok) triggerToast('Privacy settings updated', 'success');
+                    else triggerToast('Update failed', 'error');
+                } catch (error) { triggerToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        // --- CHANGE PASSWORD LOGIC (With Persistent Countdown) ---
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        let passwordCountdownInterval;
+
+        function startPasswordResendTimer(initialSeconds) {
+            const button = document.getElementById('resendCodeButton');
+            const display = document.getElementById('countdownTimer');
+            clearInterval(passwordCountdownInterval);
+
+            button.disabled = true;
+            display.style.display = 'inline-block';
+            let timeLeft = initialSeconds;
+
+            display.textContent = `(${timeLeft}s)`; // Init text
+
+            passwordCountdownInterval = setInterval(() => {
+                timeLeft--;
+                display.textContent = `(${timeLeft}s)`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(passwordCountdownInterval);
+                    localStorage.removeItem('passwordChangeVerificationActive');
+                    localStorage.removeItem('passwordChangeVerificationEndTime');
+                    localStorage.removeItem('passwordChangeUserEmail');
+
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                    display.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        // Check Logic on Load (Password)
+        function checkPasswordVerificationState() {
+            const isActive = localStorage.getItem('passwordChangeVerificationActive') === 'true';
+            const endTime = localStorage.getItem('passwordChangeVerificationEndTime');
+            const userEmail = localStorage.getItem('passwordChangeUserEmail');
+
+            if (isActive && endTime && userEmail) {
+                const remainingSeconds = Math.round((endTime - Date.now()) / 1000);
+                if (remainingSeconds > 0) {
+                    // Restore State
+                    document.getElementById('passwordChangeFormContainer').classList.add('d-none');
+                    document.getElementById('emailVerificationContainer').classList.remove('d-none');
+                    document.getElementById('userEmailForVerification').textContent = userEmail;
+
+                    // Restart Timer Logic
+                    startPasswordResendTimer(remainingSeconds);
+                } else {
+                    // Clean up if expired
+                    localStorage.removeItem('passwordChangeVerificationActive');
+                    localStorage.removeItem('passwordChangeVerificationEndTime');
+                    localStorage.removeItem('passwordChangeUserEmail');
+                }
+            }
+        }
+        checkPasswordVerificationState(); // Run immediately
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                clearErrors('currentPassword', 'newPassword', 'confirmNewPassword');
+
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmedNewPassword = document.getElementById('confirmNewPassword').value;
+
+                if (newPassword !== confirmedNewPassword) return showError('confirmNewPassword', 'Passwords do not match.');
+                if (newPassword.length < 6) return showError('newPassword', 'Minimum 6 characters.');
+
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/jobseeker/account-settings/change-password', {
+                        method: 'POST',
+                        headers: {[csrfHeader]: csrfToken, 'Content-Type': 'application/json'},
+                        body: JSON.stringify({currentPassword, newPassword, confirmedNewPassword})
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        triggerToast('Verification code sent', 'info');
+
+                        // Save State
+                        const endTime = Date.now() + (60 * 1000); // 60s from now
+                        localStorage.setItem('passwordChangeVerificationActive', 'true');
+                        localStorage.setItem('passwordChangeVerificationEndTime', endTime);
+                        localStorage.setItem('passwordChangeUserEmail', result.data.email);
+
+                        // Update UI
+                        document.getElementById('passwordChangeFormContainer').classList.add('d-none');
+                        document.getElementById('emailVerificationContainer').classList.remove('d-none');
+                        document.getElementById('userEmailForVerification').textContent = result.data.email;
+
+                        startPasswordResendTimer(60);
+                    } else {
+                        if (result.errors) Object.keys(result.errors).forEach(key => showError(key, result.errors[key]));
+                        else triggerToast(result.message, 'error');
+                    }
+                } catch (error) { triggerToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        // Verify Password Code
+        const emailVerificationForm = document.getElementById('emailVerificationForm');
+        if (emailVerificationForm) {
+            emailVerificationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const code = document.getElementById('verificationCode').value;
+                showFullPageLoading();
+
+                try {
+                    const response = await fetch(`/jobseeker/verify-password-change?code=${code}`, {
+                        method: 'POST', headers: {[csrfHeader]: csrfToken}
+                    });
+                    const result = await response.json();
+
+                    if(response.ok && result.success) {
+                        localStorage.removeItem('passwordChangeVerificationActive');
+                        localStorage.removeItem('passwordChangeVerificationEndTime');
+                        localStorage.removeItem('passwordChangeUserEmail');
+
+                        triggerToast('Password changed! Redirecting...', 'success');
+                        setTimeout(() => window.location.href = '/jobseeker/profile-update', 1500);
+                    } else {
+                        showError('verificationCode', result.message || 'Invalid code');
+                        triggerToast('Verification failed', 'error');
+                    }
+                } catch(e) { triggerToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        // Resend Password Code
+        const resendCodeButton = document.getElementById('resendCodeButton');
+        if(resendCodeButton) {
+            resendCodeButton.addEventListener('click', async () => {
+                showFullPageLoading();
+                try {
+                    const res = await fetch('/jobseeker/resend-password-code', {method: 'POST', headers: {[csrfHeader]: csrfToken}});
+                    if(res.ok) {
+                        triggerToast('New code sent', 'success');
+                        const newEndTime = Date.now() + (60 * 1000);
+                        localStorage.setItem('passwordChangeVerificationEndTime', newEndTime);
+                        startPasswordResendTimer(60);
+                    } else triggerToast('Failed to resend', 'error');
+                } catch(e) { triggerToast('Error sending code', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        // --- DELETE ACCOUNT LOGIC (With Persistent Countdown) ---
+        const deleteCheckbox = document.getElementById('confirmDeleteCheckbox');
+        const deleteButton = document.getElementById('deleteAccountButton');
+        if (deleteCheckbox) {
+            deleteCheckbox.addEventListener('change', function() { deleteButton.disabled = !this.checked; });
+        }
+
+        let deleteCountdownInterval;
+
+        function startDeleteResendTimer(initialSeconds) {
+            const button = document.getElementById('resendDeleteCodeButton');
+            const display = document.getElementById('deleteCountdownTimer');
+            clearInterval(deleteCountdownInterval);
+
+            button.disabled = true;
+            display.style.display = 'inline-block';
+            let timeLeft = initialSeconds;
+
+            display.textContent = `(${timeLeft}s)`;
+
+            deleteCountdownInterval = setInterval(() => {
+                timeLeft--;
+                display.textContent = `(${timeLeft}s)`;
+                if (timeLeft <= 0) {
+                    clearInterval(deleteCountdownInterval);
+                    localStorage.removeItem('deleteAccountVerificationActive');
+                    localStorage.removeItem('deleteAccountVerificationEndTime');
+                    localStorage.removeItem('deleteAccountEmail');
+                    localStorage.removeItem('deleteAccountPassword');
+
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                    display.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function checkDeleteAccountState() {
+            const isActive = localStorage.getItem('deleteAccountVerificationActive') === 'true';
+            const endTime = localStorage.getItem('deleteAccountVerificationEndTime');
+            const userEmail = localStorage.getItem('deleteAccountEmail');
+            const password = localStorage.getItem('deleteAccountPassword');
+
+            if (isActive && endTime && userEmail && password) {
+                const remainingSeconds = Math.round((endTime - Date.now()) / 1000);
+                if (remainingSeconds > 0) {
+                    document.getElementById('deleteFormContainer').classList.add('d-none');
+                    document.getElementById('emailVerificationDeleteContainer').classList.remove('d-none');
+                    document.getElementById('deleteAccountEmailDisplay').textContent = userEmail;
+                    startDeleteResendTimer(remainingSeconds);
+                } else {
+                    localStorage.removeItem('deleteAccountVerificationActive');
+                    localStorage.removeItem('deleteAccountVerificationEndTime');
+                    localStorage.removeItem('deleteAccountEmail');
+                    localStorage.removeItem('deleteAccountPassword');
+                }
+            }
+        }
+        checkDeleteAccountState(); // Run immediately
+
+        const deleteAccountForm = document.getElementById('deleteAccountForm');
+        if(deleteAccountForm) {
+            deleteAccountForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const password = document.getElementById('deleteConfirmPassword').value;
+                if(!password) return showError('deleteConfirmPassword', 'Required');
+
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/jobseeker/delete-account/verify-password', {
+                        method: 'POST',
+                        headers: {[csrfHeader]: csrfToken, 'Content-Type': 'application/json'},
+                        body: JSON.stringify({password})
+                    });
+                    const result = await response.json();
+
+                    if(response.ok) {
+                        // Save State
+                        const endTime = Date.now() + (60 * 1000);
+                        localStorage.setItem('deleteAccountPassword', password);
+                        localStorage.setItem('deleteAccountVerificationActive', 'true');
+                        localStorage.setItem('deleteAccountVerificationEndTime', endTime);
+                        localStorage.setItem('deleteAccountEmail', result.email);
+
+                        // Update UI
+                        document.getElementById('deleteFormContainer').classList.add('d-none');
+                        document.getElementById('emailVerificationDeleteContainer').classList.remove('d-none');
+                        document.getElementById('deleteAccountEmailDisplay').textContent = result.email;
+                        triggerToast('Verification code sent', 'warning');
+
+                        startDeleteResendTimer(60);
+                    } else {
+                        triggerToast('Incorrect password', 'error');
+                    }
+                } catch(e) { triggerToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        const emailVerificationDeleteForm = document.getElementById('emailVerificationDeleteForm');
+        if(emailVerificationDeleteForm) {
+            emailVerificationDeleteForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const code = document.getElementById('deleteAccountVerificationCode').value;
+                const password = localStorage.getItem('deleteAccountPassword');
+
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/jobseeker/delete-account/finalize', {
+                        method: 'POST',
+                        headers: {[csrfHeader]: csrfToken, 'Content-Type': 'application/json'},
+                        body: JSON.stringify({ verificationCode: code })
+                    });
+                    const result = await response.json();
+
+                    if(response.ok && result.success) {
+                        document.getElementById('redirectOverlay').classList.add('show');
+
+                        // Clear all state
+                        localStorage.removeItem('deleteAccountVerificationActive');
+                        localStorage.removeItem('deleteAccountVerificationEndTime');
+                        localStorage.removeItem('deleteAccountEmail');
+                        localStorage.removeItem('deleteAccountPassword');
+
+                        setTimeout(() => performPostRedirect(result.data.redirectUrl), 1500);
+                    } else {
+                        showError('deleteAccountVerificationCode', 'Invalid code');
+                    }
+                } catch(e) { triggerToast('Error deleting account', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        const resendDeleteBtn = document.getElementById('resendDeleteCodeButton');
+        if(resendDeleteBtn) {
+            resendDeleteBtn.addEventListener('click', async () => {
+                const password = localStorage.getItem('deleteAccountPassword');
+                if(!password) return triggerToast('Session expired, please restart', 'error');
+
+                showFullPageLoading();
+                try {
+                    await fetch('/jobseeker/delete-account/resend-code', {
+                        method: 'POST',
+                        headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password })
+                    });
+                    triggerToast('Code resent', 'success');
+
+                    const newEndTime = Date.now() + (60 * 1000);
+                    localStorage.setItem('deleteAccountVerificationEndTime', newEndTime);
+                    startDeleteResendTimer(60);
+                } catch(e) { triggerToast('Error resending', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+    });
+</script>
+</body>
+</html>

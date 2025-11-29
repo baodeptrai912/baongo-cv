@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Advanced Job Search</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script> <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        /* ENHANCED FILTER STYLES */
+        :root {
+            --primary-color: #ff4500;
+            --secondary-color: #ff6b35;
+            --accent-color: #28a745;
+            --dark-color: #2c3e50;
+            --light-color: #fff5f2;
+            --border-color: #f4e6e0;
+            --shadow-light: 0 2px 10px rgba(255, 69, 0, 0.1);
+            --shadow-medium: 0 4px 15px rgba(255, 69, 0, 0.15);
+            --shadow-heavy: 0 8px 25px rgba(255, 69, 0, 0.2);
+            --gradient-primary: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%);
+            --gradient-secondary: linear-gradient(135deg, #ff6b35 0%, #ff8040 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%);
+            color: #333;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Search Header Section */
+        .search-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 3rem 0 5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        }
+
+        .search-header .display-5 {
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Search Summary */
+        .search-summary {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Filter Badge */
+        .filter-badge {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border: 2px solid rgba(255, 69, 0, 0.3);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: inline-flex;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .filter-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.3);
+        }
+
+        .filter-badge .badge-count {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Search Form Container */
+        .search-form-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(255, 69, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-top: -3rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Form Controls */
+        .form-group-enhanced {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .form-label-enhanced {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .form-label-enhanced i {
+            background: var(--gradient-primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .form-control-enhanced,
+        .form-select-enhanced {
+            padding: 1rem 1.25rem;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-control-enhanced:focus,
+        .form-select-enhanced:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 69, 0, 0.15);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        /* Multi-select Enhancement */
+        .multi-select-wrapper {
+            position: relative;
+        }
+
+        .multi-select-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            min-height: 20px;
+        }
+
+        .selected-tag {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            animation: tagAppear 0.3s ease;
+        }
+
+        .selected-tag .remove-tag {
+            margin-left: 0.5rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .selected-tag .remove-tag:hover {
+            opacity: 1;
+        }
+
+        @keyframes tagAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Advanced Filters Toggle */
+        .filter-section-header {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .advanced-toggle-btn {
+            background: var(--gradient-secondary);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: var(--shadow-medium);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .advanced-toggle-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .advanced-toggle-btn:hover::before {
+            left: 100%;
+        }
+
+        .advanced-toggle-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .advanced-toggle-btn.active {
+            background: var(--gradient-primary);
+            transform: translateY(-3px);
+        }
+
+        .advanced-toggle-btn .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .advanced-toggle-btn.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Advanced Filters Section */
+        .advanced-filters {
+            background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.95) 100%);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(222, 226, 230, 0.5);
+            display: none;
+            animation: slideDown 0.5s ease;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .advanced-filters.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .advanced-filters-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .advanced-filters-title {
+            color: var(--dark-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .advanced-filters-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Search Buttons */
+        .search-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-search-enhanced {
+            padding: 1.25rem 3rem;
+            border-radius: 50px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 200px;
+        }
+
+        .btn-search-primary-enhanced {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-search-primary-enhanced:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-heavy);
+            color: white;
+        }
+
+        .btn-clear-enhanced {
+            background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+            border: none;
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-clear-enhanced:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+            color: white;
+        }
+
+        /* Button Loading State */
+        .btn-loading {
+            pointer-events: none;
+            position: relative;
+        }
+
+        .btn-loading .btn-text {
+            opacity: 0.6;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Filter Statistics */
+        .filter-stats {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid rgba(222, 226, 230, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-stats-title {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #f4e6e0;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* Results Section */
+        .results-section {
+            padding: 3rem 0;
+        }
+
+        .results-header {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Job Card */
+        .job-card-modern {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            background: white;
+        }
+
+        .job-card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .job-card-modern .card-body {
+            padding: 1.75rem;
+        }
+
+        .company-logo {
+            width: 65px;
+            height: 65px;
+            border-radius: 15px;
+            object-fit: cover;
+            border: 3px solid #f8f9fa;
+            box-shadow: var(--shadow-light);
+        }
+
+        .job-title-modern {
+            font-weight: 700;
+            color: var(--dark-color);
+            font-size: 1.1rem;
+            line-height: 1.3;
+            margin-bottom: 0.5rem;
+        }
+
+        .company-name-modern {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .location-modern {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .location-modern i {
+            color: var(--primary-color);
+        }
+
+        .job-meta {
+            padding: 1rem 0;
+            border-top: 1px solid #f8f9fa;
+            border-bottom: 1px solid #f8f9fa;
+            margin: 1rem 0;
+        }
+
+        .job-badge {
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%);
+            color: var(--dark-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0.2rem;
+            display: inline-block;
+            border: 1px solid var(--border-color);
+        }
+
+        .job-badge.salary {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .job-badge.trending {
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .requirements-preview {
+            background: #fff8f6;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .requirements-preview h6 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .requirements-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .requirements-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .job-footer {
+            border-top: 2px solid #f8f9fa;
+            padding-top: 1.5rem;
+            margin-top: auto;
+        }
+
+        .job-dates {
+            background: #fff8f6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .job-dates small {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .job-dates .posted-date {
+            color: var(--secondary-color);
+        }
+
+        .job-dates .deadline-date {
+            color: var(--primary-color);
+        }
+
+        .btn-view-details-modern,
+        .btn-apply-now-modern {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-view-details-modern {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: white;
+        }
+
+        .btn-view-details-modern:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-apply-now-modern {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff6b35 100%);
+            border: 2px solid var(--primary-color);
+            color: white;
+        }
+
+        .btn-apply-now-modern:hover {
+            background: linear-gradient(135deg, #ff6b35 0%, var(--primary-color) 100%);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+            color: white;
+        }
+
+        /* Enhanced Pagination from transaction-history.html */
+        .pagination-container {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(to top, #FAFBFC 0%, white 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            margin-top: 3rem;
+            box-shadow: var(--shadow-light);
+        }
+
+        .pagination {
+            gap: 0.375rem;
+        }
+
+        .pagination .page-link {
+            color: var(--dark-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 0.875rem;
+            min-width: 36px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--gradient-primary) !important;
+            border-color: var(--primary-color) !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.25);
+            z-index: 3;
+        }
+
+        .pagination .page-link:hover:not([disabled]):not(.active) {
+            background: var(--light-color) !important;
+            border-color: var(--primary-color) !important;
+            color: var(--primary-color) !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            min-height: 500px; /* Ensure it takes up space */
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 20px;
+            border: 2px dashed var(--border-color);
+            box-shadow: var(--shadow-light);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        /* Skeleton */
+        .skeleton-container {
+            background: white;
+            border-radius: 20px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-header {
+                padding: 2rem 0 3rem 0;
+            }
+
+            .search-form-container {
+                padding: 1.5rem;
+                margin-top: -1rem;
+            }
+
+            .job-card-modern .card-body {
+                padding: 1.25rem;
+            }
+
+            .search-buttons {
+                flex-direction: column;
+            }
+
+            .btn-search-enhanced {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<!-- Search Header Section -->
+<section class="search-header">
+    <div class="container text-center">
+        <h1 class="display-5 mb-3 fade-in">Find Your Dream Job</h1>
+        <p class="lead mb-0 fade-in">Advanced search with intelligent filters</p>
+
+        <!-- Search Summary -->
+        <div class="search-summary fade-in" th:if="${searchResponse != null}">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-1" th:text="${searchResponse.searchSummary}">Search Summary</h5>
+                    <!-- Show active filters count -->
+                    <div th:if="${searchResponse.display.activeFiltersCount > 0}" class="filter-badge mt-2">
+                        <i class="fas fa-filter"></i>
+                        <span th:text="${searchResponse.display.activeFiltersCount}">3</span> active filters
+                        <span class="badge-count" th:text="${searchResponse.display.activeFiltersCount}">3</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-clock me-1"></i>Updated now
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Enhanced Advanced Search Form -->
+<section class="py-4">
+    <div class="container">
+        <div class="search-form-container slide-up">
+            <form th:action="@{/jobseeker/job-search}" method="GET" id="searchForm">
+
+                <!-- Basic Search Row -->
+                <div class="row g-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-group-enhanced">
+                            <label for="keyword" class="form-label-enhanced">
+                                <i class="fas fa-search"></i>Keywords
+                            </label>
+                            <input type="text" class="form-control-enhanced" id="keyword" name="keyword"
+                                   th:value="${searchResponse != null ? searchResponse.criteria.keyword : ''}"
+                                   placeholder="Job title, skills, company...">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-group-enhanced">
+                            <label for="locations" class="form-label-enhanced">
+                                <i class="fas fa-map-marker-alt"></i>Locations
+                            </label>
+                            <div class="multi-select-wrapper">
+                                <select class="form-select-enhanced" id="locations" name="locations" multiple>
+                                    <option th:each="loc : ${searchResponse != null ? searchResponse.formOptions.locationTypes : T(com.example.baoNgoCv.enums.LocationType).values()}"
+                                            th:value="${loc}"
+                                            th:text="${loc.displayName}"
+                                            th:selected="${searchResponse != null && searchResponse.criteria.locations != null && searchResponse.criteria.locations.contains(loc)}">
+                                    </option>
+                                </select>
+                                <div class="multi-select-tags" id="locations-tags"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-group-enhanced">
+                            <label for="experiences" class="form-label-enhanced">
+                                <i class="fas fa-user-graduate"></i>Experience
+                            </label>
+                            <div class="multi-select-wrapper">
+                                <select class="form-select-enhanced" id="experiences" name="experiences" multiple>
+                                    <option th:each="level : ${searchResponse != null ? searchResponse.formOptions.experienceLevels : T(com.example.baoNgoCv.enums.ExperienceLevel).values()}"
+                                            th:value="${level}"
+                                            th:text="${level.displayName}"
+                                            th:selected="${searchResponse != null && searchResponse.criteria.experiences != null && searchResponse.criteria.experiences.contains(level)}">
+                                    </option>
+                                </select>
+                                <div class="multi-select-tags" id="experiences-tags"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <div class="form-group-enhanced">
+                            <label for="salaryRanges" class="form-label-enhanced">
+                                <i class="fas fa-dollar-sign"></i>Salary Range
+                            </label>
+                            <div class="multi-select-wrapper">
+                                <select class="form-select-enhanced" id="salaryRanges" name="salaryRanges" multiple>
+                                    <option th:each="salary : ${searchResponse != null ? searchResponse.formOptions.salaryRanges : T(com.example.baoNgoCv.enums.SalaryRange).values()}"
+                                            th:value="${salary}"
+                                            th:text="${salary.displayName}"
+                                            th:selected="${searchResponse != null && searchResponse.criteria.salaryRanges != null && searchResponse.criteria.salaryRanges.contains(salary)}">
+                                    </option>
+                                </select>
+                                <div class="multi-select-tags" id="salaryRanges-tags"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters Toggle -->
+                <div class="filter-section-header">
+                    <button type="button" class="advanced-toggle-btn" id="advancedToggle">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Advanced Filters</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </button>
+                </div>
+
+                <!-- Enhanced Advanced Filters Section -->
+                <div class="advanced-filters" id="advancedFilters">
+                    <div class="advanced-filters-header">
+                        <h5 class="advanced-filters-title">
+                            <i class="fas fa-filter me-2"></i>Advanced Filters
+                        </h5>
+                        <p class="advanced-filters-subtitle">Refine your search with detailed options</p>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group-enhanced">
+                                <label for="jobTypes" class="form-label-enhanced">
+                                    <i class="fas fa-briefcase"></i>Job Type
+                                </label>
+                                <div class="multi-select-wrapper">
+                                    <select class="form-select-enhanced" id="jobTypes" name="jobTypes" multiple>
+                                        <option th:each="type : ${searchResponse != null ? searchResponse.formOptions.jobTypes : T(com.example.baoNgoCv.enums.JobType).values()}"
+                                                th:value="${type}"
+                                                th:text="${type.displayName}"
+                                                th:selected="${searchResponse != null && searchResponse.criteria.jobTypes != null && searchResponse.criteria.jobTypes.contains(type)}">
+                                        </option>
+                                    </select>
+                                    <div class="multi-select-tags" id="jobTypes-tags"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group-enhanced">
+                                <label for="industries" class="form-label-enhanced">
+                                    <i class="fas fa-industry"></i>Industry
+                                </label>
+                                <div class="multi-select-wrapper">
+                                    <select class="form-select-enhanced" id="industries" name="industries" multiple>
+                                        <option th:each="industry : ${searchResponse != null ? searchResponse.formOptions.industryTypes : T(com.example.baoNgoCv.enums.IndustryType).values()}"
+                                                th:value="${industry}"
+                                                th:text="${industry.displayName}"
+                                                th:selected="${searchResponse != null && searchResponse.criteria.industries != null && searchResponse.criteria.industries.contains(industry)}">
+                                        </option>
+                                    </select>
+                                    <div class="multi-select-tags" id="industries-tags"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group-enhanced">
+                                <label for="postedAfter" class="form-label-enhanced">
+                                    <i class="fas fa-calendar-plus"></i>Posted After
+                                </label>
+                                <input type="date" class="form-control-enhanced" id="postedAfter" name="postedAfter"
+                                       th:value="${searchResponse != null ? searchResponse.criteria.postedAfter : ''}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="form-group-enhanced">
+                                <label for="deadlineBefore" class="form-label-enhanced">
+                                    <i class="fas fa-calendar-times"></i>Deadline Before
+                                </label>
+                                <input type="date" class="form-control-enhanced" id="deadlineBefore" name="deadlineBefore"
+                                       th:value="${searchResponse != null ? searchResponse.criteria.deadlineBefore : ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Statistics -->
+                    <div class="filter-stats" th:if="${searchResponse != null}">
+                        <h6 class="filter-stats-title">
+                            <i class="fas fa-chart-bar me-2"></i>Search Statistics
+                        </h6>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number" th:text="${searchResponse.totalElements}">0</span>
+                                <div class="stat-label">Jobs</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" th:text="${searchResponse.display.activeFiltersCount}">0</span>
+                                <div class="stat-label">Filters</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" th:text="${searchResponse.totalPages}">1</span>
+                                <div class="stat-label">Pages</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number"><i class="fas fa-clock text-primary"></i></span>
+                                <div class="stat-label">Updated</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Search Buttons -->
+                <div class="search-buttons">
+                    <button type="submit" class="btn btn-search-primary-enhanced btn-search-enhanced" id="searchBtn">
+                        <i class="fas fa-search me-2"></i>
+                        <span class="btn-text">Search Jobs</span>
+                    </button>
+                    <button type="button" class="btn btn-clear-enhanced btn-search-enhanced"
+                            th:if="${searchResponse != null && searchResponse.display.activeFiltersCount > 0}"
+                            id="clearFilters">
+                        <i class="fas fa-times me-2"></i>
+                        <span class="btn-text">Clear All Filters</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Results Section -->
+<section class="results-section" th:if="${searchResponse != null}">
+    <div class="container">
+        <!-- Results Header -->
+        <div class="results-header fade-in">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h3 class="mb-2">
+                        <span th:text="${searchResponse.totalElements}">0</span> Jobs Found
+                    </h3>
+                    <p class="text-muted mb-0">
+                        Showing <span th:text="${#lists.size(searchResponse.jobPostings)}">0</span> results
+                        • Page <span th:text="${searchResponse.currentPageDisplay}">1</span> of <span th:text="${searchResponse.totalPages}">1</span>
+                    </p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <select class="form-select w-auto d-inline-block" name="sortBy" onchange="jobPagination.updateSort(this.value)">
+                        <option value="postedDate" th:selected="${searchResponse.criteria.sortBy == 'postedDate'}">Latest Posted</option>
+                        <option value="applicationDeadline" th:selected="${searchResponse.criteria.sortBy == 'applicationDeadline'}">Deadline</option>
+                        <option value="title" th:selected="${searchResponse.criteria.sortBy == 'title'}">Job Title</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Results -->
+        <div th:if="${searchResponse.hasResults}">
+            <div class="row gy-4 fade-in" id="jobs-container">
+                <!-- Job Cards -->
+                <div th:each="job, iterStat : ${searchResponse.jobPostings}"
+                     class="col-lg-4 col-md-6 d-flex align-items-stretch"
+                     th:style="'animation-delay: ' + ${iterStat.index * 0.1} + 's'">
+                    <div class="card job-card-modern w-100">
+                        <div class="card-body d-flex flex-column">
+                            <!-- Company & Job Header -->
+                            <div class="d-flex align-items-start mb-3">
+                                <img th:src="${job.companyLogo} ?: '/img/default-company.png'"
+                                     th:alt="${job.companyName}"
+                                     class="company-logo me-3"
+                                     onerror="this.src='/img/default-company.png'">
+                                <div class="flex-grow-1">
+                                    <h5 class="job-title-modern" th:text="${job.title}">Job Title</h5>
+                                    <p class="company-name-modern mb-1" th:text="${job.companyName}">Company Name</p>
+                                    <div class="location-modern">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <span th:text="${job.location?.displayName} ?: 'Location TBD'">Location</span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="badge bg-success mb-2" th:if="${job.trending}">
+                                        <i class="fas fa-fire me-1"></i>HOT
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Job Meta Info -->
+                            <div class="job-meta">
+                                <div class="d-flex flex-wrap gap-1">
+                                    <span class="job-badge" th:text="${job.jobType?.displayName} ?: 'Full-time'">Full-time</span>
+                                    <span class="job-badge" th:text="${job.experience?.displayName} ?: 'Any Level'">Experience</span>
+                                    <span class="job-badge salary" th:text="${job.salaryRange?.displayName} ?: 'Competitive'">Salary</span>
+                                    <span class="job-badge trending" th:if="${job.trending}">
+                                        <i class="fas fa-fire me-1"></i>Trending
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Requirements Preview -->
+                            <div class="requirements-preview" th:if="${job.topRequirements != null && !job.topRequirements.isEmpty()}">
+                                <h6><i class="fas fa-list-check me-2"></i>Key Requirements</h6>
+                                <ul class="requirements-list">
+                                    <li th:each="req : ${job.topRequirements}" th:text="${req}" class="text-truncate">Requirement</li>
+                                </ul>
+                            </div>
+
+                            <!-- Job Footer -->
+                            <div class="job-footer mt-auto">
+                                <!-- Dates -->
+                                <div class="job-dates mb-3">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="d-block">
+                                                <i class="fas fa-calendar-plus me-1 posted-date"></i>
+                                                Posted
+                                                <span th:text="${#temporals.format(job.postedDate, 'MMM dd')}" class="posted-date">Date</span>
+                                            </small>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <small class="d-block">
+                                                <i class="fas fa-clock me-1 deadline-date"></i>
+                                                Deadline
+                                                <span th:text="${#temporals.format(job.applicationDeadline, 'MMM dd')}" class="deadline-date">Date</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <a th:href="@{/jobseeker/job-detail/{id}(id=${job.id})}"
+                                       class="btn btn-view-details-modern flex-fill text-center">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    <a th:href="@{/jobseeker/apply-job/{id}(id=${job.id})}"
+                                       class="btn btn-apply-now-modern flex-fill text-center"
+                                       th:onclick="${!#authorization.expression('isAuthenticated()')} ? 'showLoginNotification(event)' : null">
+                                        <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:unless="${searchResponse.hasResults}" class="empty-state fade-in">
+            <i class="fas fa-search-minus"></i>
+            <h5>No Jobs Found</h5>
+            <p class="mb-3">We couldn't find any jobs matching your search criteria.</p>
+            <p class="text-muted">Try adjusting your filters or broadening your search terms.</p>
+            <button type="button" class="btn btn-primary" onclick="clearAllFilters()">
+                <i class="fas fa-refresh me-2"></i>Clear All Filters
+            </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container fade-in" th:if="${searchResponse.hasResults && searchResponse.totalPages > 1}">
+            <nav aria-label="Job search pagination">
+                <ul class="pagination justify-content-center mb-0" id="paginationList">
+                    <!-- Previous Button -->
+                    <li class="page-item" th:classappend="${!searchResponse.hasPreviousPage} ? 'disabled'">
+                        <button class="page-link pagination-btn"
+                                th:data-page="${searchResponse.currentPage - 1}"
+                                th:disabled="${!searchResponse.hasPreviousPage}"
+                                type="button" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, searchResponse.totalPages - 1)}"
+                        th:if="${pageNum >= searchResponse.currentPage - 2 && pageNum <= searchResponse.currentPage + 2}"
+                        th:classappend="${pageNum == searchResponse.currentPage} ? 'active'">
+                        <button class="page-link pagination-btn"
+                                th:data-page="${pageNum}"
+                                th:text="${pageNum + 1}"
+                                th:disabled="${pageNum == searchResponse.currentPage}"
+                                type="button">1
+                        </button>
+                    </li>
+
+                    <!-- Next Button -->
+                    <li class="page-item" th:classappend="${!searchResponse.hasNextPage} ? 'disabled'">
+                        <button class="page-link pagination-btn"
+                                th:data-page="${searchResponse.currentPage + 1}"
+                                th:disabled="${!searchResponse.hasNextPage}"
+                                type="button" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* Enhanced JavaScript with CSR Pagination */
+    document.addEventListener('DOMContentLoaded', function () {
+        // Advanced Filters Toggle
+        const advancedToggle = document.getElementById('advancedToggle');
+        const advancedFilters = document.getElementById('advancedFilters');
+
+        if (advancedToggle && advancedFilters) {
+            advancedToggle.addEventListener('click', function () {
+                const isVisible = advancedFilters.classList.contains('show');
+                if (isVisible) {
+                    advancedFilters.classList.remove('show');
+                    advancedToggle.classList.remove('active');
+                    advancedFilters.style.display = 'none';
+                } else {
+                    advancedFilters.style.display = 'block';
+                    setTimeout(() => {
+                        advancedFilters.classList.add('show');
+                        advancedToggle.classList.add('active');
+                    }, 10);
+                }
+            });
+        }
+
+        // Multi-select tags functionality
+        function setupMultiSelectTags() {
+            const selects = document.querySelectorAll('.multi-select-wrapper select[multiple]');
+            selects.forEach(select => {
+                const tagsContainer = select.parentElement.querySelector('.multi-select-tags');
+                if (!tagsContainer) return;
+
+                function updateTags() {
+                    tagsContainer.innerHTML = '';
+                    const selectedOptions = Array.from(select.selectedOptions);
+                    selectedOptions.forEach(option => {
+                        const tag = document.createElement('div');
+                        tag.className = 'selected-tag';
+                        tag.innerHTML = `<span>${option.text}</span>
+                            <i class="fas fa-times remove-tag" data-value="${option.value}"></i>`;
+
+                        tag.querySelector('.remove-tag').addEventListener('click', function () {
+                            option.selected = false;
+                            updateTags();
+                        });
+                        tagsContainer.appendChild(tag);
+                    });
+                }
+
+                select.addEventListener('change', updateTags);
+                updateTags(); // Initialize
+            });
+        }
+
+        // Initialize
+        setupMultiSelectTags();
+
+        // Enhanced form submission
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+
+        if (searchForm && searchBtn) {
+            searchForm.addEventListener('submit', function () {
+                searchBtn.classList.add('btn-loading');
+                searchBtn.disabled = true;
+
+                // Re-enable after 5 seconds as fallback
+                setTimeout(() => {
+                    searchBtn.classList.remove('btn-loading');
+                    searchBtn.disabled = false;
+                }, 5000);
+            });
+        }
+
+        // Clear filters functionality
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function () {
+                // Clear all form inputs
+                const form = document.getElementById('searchForm');
+                const inputs = form.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type === 'text' || input.type === 'date') {
+                        input.value = '';
+                    } else if (input.tagName === 'SELECT') {
+                        input.selectedIndex = -1;
+                        Array.from(input.options).forEach(option => {
+                            option.selected = false;
+                        });
+                    }
+                });
+
+                // Update tags
+                setupMultiSelectTags();
+
+                // Submit form
+                form.submit();
+            });
+        }
+
+        // =================================================================
+        // CSR PAGINATION - API Call and DOM Update
+        // =================================================================
+        const MIN_LOADING_TIME = 800; // To prevent flashing
+
+        const addPaginationButtonListener = (btn) => {
+            btn.addEventListener('click', async function () {
+                if (this.disabled || this.classList.contains('disabled')) return;
+
+                const page = this.dataset.page;
+                const jobsContainer = document.getElementById('jobs-container');
+                
+                // Show spinner inside the container
+                jobsContainer.innerHTML = `
+                    <div class="spinner-container">
+                        <div class="spinner-border" role="status" style="color: var(--primary-color); width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>`;
+                
+                document.querySelector('.results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                const startTime = Date.now();
+                const formData = new FormData(document.getElementById('searchForm'));
+                const searchParams = new URLSearchParams();
+
+                for (let [key, value] of formData.entries()) {
+                    if (value) searchParams.append(key, value);
+                }
+                searchParams.set('page', page);
+                const apiUrl = `/jobseeker/job-search-api?${searchParams.toString()}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {'Accept': 'application/json'}
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    
+                    const elapsed = Date.now() - startTime;
+                    const delay = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+                    setTimeout(() => {
+                        updateJobCards(data);
+                        updatePagination(data);
+                        updateResultsHeader(data);
+                        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+                        window.history.pushState({page: page}, '', newUrl);
+                    }, delay);
+
+                } catch (error) {
+                    console.error('Error loading jobs:', error);
+                    jobsContainer.innerHTML = `
+                        <div class="col-12">
+                            <div class="empty-state" style="padding: 5rem 2rem;">
+                                <div class="empty-state-icon" style="font-size: 2rem; color: var(--primary-color); background: var(--light-color); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h5>Unable to load jobs</h5>
+                                <p>Please try again later</p>
+                            </div>
+                        </div>`;
+                }
+            });
+        };
+
+        // Gắn listeners vào tất cả pagination buttons
+        document.querySelectorAll('.pagination-btn').forEach(addPaginationButtonListener);
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            const options = { month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Helper function to update job cards
+        function updateJobCards(data) {
+            const container = document.getElementById('jobs-container');
+            if (!container) return;
+
+            // Xóa nội dung cũ trước khi thêm nội dung mới
+            container.innerHTML = '';
+
+            if (!data.display || !data.display.hasResults) {
+                container.innerHTML = `
+            <div class="col-12 fade-in">
+                <div class="empty-state fade-in">
+                    <i class="fas fa-search-minus"></i>
+                    <h5>No Jobs Found</h5>
+                    <p class="mb-3">We couldn't find any jobs matching your search criteria.</p>
+                    <p class="text-muted">Try adjusting your filters or broadening your search terms.</p>
+                </div>
+            </div>
+        `;
+                return;
+            }
+
+            let jobCardsHtml = '';
+            data.jobPostings.forEach((job, index) => {
+                const topRequirementsHtml = (job.topRequirements && job.topRequirements.length > 0)
+                    ? `
+                    <div class="requirements-preview">
+                        <h6><i class="fas fa-list-check me-2"></i>Key Requirements</h6>
+                        <ul class="requirements-list">
+                            ${job.topRequirements.map(req => `<li class="text-truncate">${req}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : '';
+
+                jobCardsHtml += `
+                    <div class="col-lg-4 col-md-6 d-flex align-items-stretch fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="card job-card-modern w-100">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex align-items-start mb-3">
+                                    <img src="${job.companyLogo || '/img/default-company.png'}" alt="${job.companyName}" class="company-logo me-3" onerror="this.src='/img/default-company.png'">
+                                    <div class="flex-grow-1">
+                                        <h5 class="job-title-modern">${job.title}</h5>
+                                        <p class="company-name-modern mb-1">${job.companyName}</p>
+                                        <div class="location-modern">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            <span>${job.location?.displayName || 'Location TBD'}</span>
+                                        </div>
+                                    </div>
+                                    ${job.trending ? `<div class="text-end"><div class="badge bg-success mb-2"><i class="fas fa-fire me-1"></i>HOT</div></div>` : ''}
+                                </div>
+
+                                <div class="job-meta">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="job-badge">${job.jobType?.displayName || 'Full-time'}</span>
+                                        <span class="job-badge">${job.experience?.displayName || 'Any Level'}</span>
+                                        <span class="job-badge salary">${job.salaryRange?.displayName || 'Competitive'}</span>
+                                        ${job.trending ? `<span class="job-badge trending"><i class="fas fa-fire me-1"></i>Trending</span>` : ''}
+                                    </div>
+                                </div>
+
+                                ${topRequirementsHtml}
+
+                                <div class="job-footer mt-auto">
+                                    <div class="job-dates mb-3">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="d-block">
+                                                    <i class="fas fa-calendar-plus me-1 posted-date"></i> Posted
+                                                    <span class="posted-date">${formatDate(job.postedDate)}</span>
+                                                </small>
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                <small class="d-block">
+                                                    <i class="fas fa-clock me-1 deadline-date"></i> Deadline
+                                                    <span class="deadline-date">${formatDate(job.applicationDeadline)}</span>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <a href="/jobseeker/job-detail/${job.id}" class="btn btn-view-details-modern flex-fill text-center">
+                                            <i class="fas fa-eye me-1"></i>View Details
+                                        </a>
+                                        <a href="/jobseeker/apply-job/${job.id}" class="btn btn-apply-now-modern flex-fill text-center" onclick="${!data.isAuthenticated ? 'showLoginNotification(event)' : ''}">
+                                            <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = jobCardsHtml;
+        }
+        // Helper function to update pagination
+        function updatePagination(data) {
+            const paginationData = data.pagination;
+            const paginationContainer = document.getElementById('paginationList');
+            if (!paginationContainer) return;
+            
+            const paginationSection = document.querySelector('.pagination-container');
+            if (paginationData.totalPages <= 1) {
+                if(paginationSection) paginationSection.style.display = 'none';
+                return;
+            }
+            if(paginationSection) paginationSection.style.display = 'flex';
+
+
+            let html = '';
+            const currentPage = paginationData.currentPage;
+            const totalPages = paginationData.totalPages;
+
+            // Previous button
+            html += `
+                <li class="page-item ${!paginationData.hasPreviousPage ? 'disabled' : ''}">
+                    <button class="page-link pagination-btn" data-page="${currentPage - 1}" ${!paginationData.hasPreviousPage ? 'disabled' : ''} type="button" aria-label="Previous">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </li>
+            `;
+
+            // Page numbers logic inspired by transaction-history.html
+            const maxVisible = 5;
+            let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(0, endPage - maxVisible + 1);
+            }
+
+            if (startPage > 0) {
+                html += `<li class="page-item"><button class="page-link pagination-btn" data-page="0" type="button">1</button></li>`;
+                if (startPage > 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <button class="page-link pagination-btn" data-page="${i}" ${i === currentPage ? 'disabled' : ''} type="button">${i + 1}</button>
+                    </li>
+                `;
+            }
+
+            if (endPage < totalPages - 1) {
+                if (endPage < totalPages - 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                html += `<li class="page-item"><button class="page-link pagination-btn" data-page="${totalPages - 1}" type="button">${totalPages}</button></li>`;
+            }
+
+            // Next button
+            html += `
+                <li class="page-item ${!paginationData.hasNextPage ? 'disabled' : ''}">
+                    <button class="page-link pagination-btn" data-page="${currentPage + 1}" ${!paginationData.hasNextPage ? 'disabled' : ''} type="button" aria-label="Next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </li>
+            `;
+
+            paginationContainer.innerHTML = html;
+            paginationContainer.querySelectorAll('.pagination-btn').forEach(addPaginationButtonListener);
+        }
+
+        // Helper function to update results header
+        function updateResultsHeader(data) {
+            const resultsHeader = document.querySelector('.results-header');
+            if (!resultsHeader) return;
+
+            const sortBy = data.criteria.sortBy || 'postedDate';
+
+            resultsHeader.innerHTML = `
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h3 class="mb-2">
+                    <span>${data.display.totalElements}</span> Jobs Found
+                </h3>
+                <p class="text-muted mb-0">
+                    Showing <span>${data.jobPostings.length}</span> results
+                    • Page <span>${data.pagination.currentPage + 1}</span> of <span>${data.pagination.totalPages}</span>
+                </p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <select class="form-select w-auto d-inline-block" name="sortBy" onchange="jobPagination.updateSort(this.value)">
+                    <option value="postedDate" ${sortBy === 'postedDate' ? 'selected' : ''}>Latest Posted</option>
+                    <option value="applicationDeadline" ${sortBy === 'applicationDeadline' ? 'selected' : ''}>Deadline</option>
+                    <option value="title" ${sortBy === 'title' ? 'selected' : ''}>Job Title</option>
+                </select>
+            </div>
+        </div>
+    `;
+        }
+
+        // Smooth scrolling for form sections
+        function smoothScrollTo(element) {
+            element.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+
+        // Job card animations
+        const jobCards = document.querySelectorAll('.job-card-modern');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, {threshold: 0.1});
+
+        jobCards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+
+        window.jobPagination = {
+            updateSort: function (sortValue) {
+                const url = new URL(window.location);
+                url.searchParams.set('sortBy', sortValue);
+                url.searchParams.set('page', '0');
+                window.location.href = url.toString();
+            }
+        };
+    });
+
+    // Global functions for backward compatibility
+    function clearAllFilters() {
+        document.getElementById('clearFilters')?.click();
+    }
+
+    function showLoginNotification(event) {
+        // Use the showToast function from Toast.js
+        showToast('You will be redirected to the login page to apply', 'info');
+
+        // Delay to allow the user to read the toast, then redirect
+        setTimeout(() => {
+            window.location.href = event.target.closest('a').href;
+        }, 1500); // 1.5 second delay
+
+        // Prevent the browser from navigating immediately
+        event.preventDefault();
+    }
+</script>
+</body>
+</html>

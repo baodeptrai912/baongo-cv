@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <title>Application Detail - BaoNgoCv</title>
+
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+
+    <style>
+        /* ===== MATCHING ORANGE THEME FROM MY APPLICATIONS ===== */
+        :root {
+            --primary-hue: 24;
+            --primary: #f97316;
+            --primary-dark: #ea580c;
+            --primary-light: #fb923c;
+            --gradient-brand: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            --gradient-glow: radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.15), transparent 50%);
+
+            --bg-app: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-app);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -20%;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-glow);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero-section {
+            text-align: left;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--primary);
+            background: white;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link:hover {
+            background: var(--gradient-brand);
+            color: white;
+            transform: translateX(-3px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--primary);
+        }
+
+        .job-title-hero {
+            font-size: 3rem;
+            font-weight: 900;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.75rem;
+            line-height: 1.1;
+        }
+
+        .company-hero {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .company-hero i {
+            color: var(--primary);
+        }
+
+        .company-hero span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* ===== MAIN CARD ===== */
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-brand);
+        }
+
+        .detail-content-col {
+            padding: 2.5rem;
+        }
+
+        .detail-sidebar-col {
+            padding: 2.5rem 2rem;
+            border-left: 1px solid var(--border-color);
+            background: linear-gradient(to bottom, #ffffff, #fafafa);
+        }
+
+        /* ===== INTERVIEW TICKET ===== */
+        .interview-ticket {
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff3e0 100%);
+            border: 2px solid #ffe0b2;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .interview-ticket::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: linear-gradient(to bottom, #fbbf24, #f59e0b);
+        }
+
+        .interview-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            background: rgba(251, 191, 36, 0.2);
+            color: #d35400;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+        }
+
+        .interview-title-text {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 1.25rem;
+        }
+
+        .interview-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2rem;
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #e65100;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .data-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .data-value.time {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .meeting-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            background: var(--gradient-brand);
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            border: none;
+            margin-top: 0.5rem;
+        }
+
+        .meeting-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+            color: white;
+        }
+
+        /* ===== SECTIONS ===== */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1.5rem;
+            color: var(--text-main);
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .info-card-item {
+            margin-bottom: 1.75rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fff5f2 0%, #ffede8 100%);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);
+        }
+
+        .info-content .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* ===== COVER LETTER ===== */
+        .cover-letter-container {
+            border-radius: 16px;
+            background: linear-gradient(135deg, #fff8f6 0%, #ffede8 100%);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            position: relative;
+        }
+
+        .cover-letter-container::before {
+            content: '"';
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 5rem;
+            color: var(--primary);
+            font-family: Georgia, serif;
+            opacity: 0.1;
+        }
+
+        .cover-letter-text {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .action-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-modern {
+            border-radius: 12px;
+            padding: 0.85rem 1.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-resume-modern {
+            background: var(--gradient-brand);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-resume-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+            color: white;
+        }
+
+        .btn-withdraw-modern {
+            margin-left: auto;
+            background: white;
+            color: #dc2626;
+            border: 2px solid #fecaca;
+        }
+
+        .btn-withdraw-modern:hover {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ===== SIDEBAR ===== */
+        .status-card-center {
+            text-align: center;
+            border-radius: 16px;
+            background: white;
+            padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 2.5rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .status-label-sm {
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .status-badge-xl {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 25px;
+            padding: 0.85rem 1.75rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #fef3c7, #fbbf24);
+            color: #92400e;
+            border: 2px solid #fbbf24;
+        }
+
+        .status-interviewed {
+            background: linear-gradient(135deg, #d1fae5, #34d399);
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .status-rejected {
+            background: linear-gradient(135deg, #fee2e2, #f87171);
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .status-shortlisted {
+            background: linear-gradient(135deg, #dbeafe, #60a5fa);
+            color: #1e3a8a;
+            border: 2px solid #3b82f6;
+        }
+
+        .status-withdrawn {
+            background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+            color: #475569;
+            border: 2px solid #94a3b8;
+        }
+
+        .status-hired {
+            background: linear-gradient(135deg, #d1e7dd, #34d399);
+            color: #0f5132;
+            border: 2px solid #00a085;
+        }
+
+        /* ===== TIMELINE ===== */
+        .timeline-modern {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline-modern::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 5px;
+            bottom: 0;
+            width: 3px;
+            background: var(--gradient-brand);
+            border-radius: 2px;
+        }
+
+        .tm-item {
+            position: relative;
+            padding-left: 1.5rem;
+            padding-bottom: 2rem;
+        }
+
+        .tm-icon-box {
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary);
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tm-item.active .tm-icon-box {
+            background: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+            animation: pulse-timeline 2s infinite;
+        }
+
+        @keyframes pulse-timeline {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .tm-content {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .tm-item:hover .tm-content {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-card);
+            border-color: var(--primary);
+        }
+
+        .tm-title {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            color: var(--text-main);
+        }
+
+        .tm-date {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .main-card {
+                display: block;
+            }
+
+            .detail-sidebar-col {
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .job-title-hero {
+                font-size: 2rem;
+            }
+
+            .detail-content-col,
+            .detail-sidebar-col {
+                padding: 1.5rem;
+            }
+
+            .interview-details-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadein 0.6s ease-out forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadein {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+<div th:replace="~{fragments/headerAndFooter :: confirmModal}"></div>
+
+<main class="main-container">
+    <section class="hero-section fade-in-up">
+        <a href="/jobseeker/my-application" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to applications</span>
+        </a>
+        <h1 class="job-title-hero" th:text="${applicantDetail.jobTitle}">Senior Java Developer</h1>
+        <p class="company-hero">
+            <i class="fas fa-building"></i>
+            Applied to
+            <span th:text="${applicantDetail.jobCompanyName}">Tech Corp</span>
+        </p>
+    </section>
+
+    <div class="row g-0 main-card fade-in-up delay-1">
+        <div class="col-lg-8 detail-content-col">
+
+            <!-- Interview Ticket -->
+            <div class="interview-ticket fade-in-up delay-2" th:if="${applicantDetail.interviewSchedule.isPresent()}">
+                <div class="interview-badge">
+                    <i class="fas fa-calendar-check"></i>
+                    Interview scheduled
+                </div>
+
+                <div class="interview-title-text">
+                    You're invited to an interview!
+                </div>
+
+                <div class="interview-details-grid mt-3">
+                    <div class="interview-data-point">
+                        <div class="data-label">Date & Time</div>
+                        <div class="data-value"
+                             th:text="${#temporals.format(applicantDetail.interviewSchedule.get().interviewDateTime, 'EEEE, dd MMM yyyy')}">
+                            Monday, 25 Nov 2025
+                        </div>
+                        <div class="data-value time"
+                             th:text="${#temporals.format(applicantDetail.interviewSchedule.get().interviewDateTime, 'HH:mm (a)')}">
+                            10:00 (AM)
+                        </div>
+                    </div>
+
+                    <div class="interview-data-point">
+                        <div class="data-label">Format & Location</div>
+                        <div class="data-value mb-2" th:text="${applicantDetail.interviewSchedule.get().interviewType}">Online</div>
+
+                        <a th:if="${#strings.startsWith(applicantDetail.interviewSchedule.get().locationDetail, 'http')}"
+                           th:href="${applicantDetail.interviewSchedule.get().locationDetail}"
+                           target="_blank"
+                           class="meeting-link-btn">
+                            <i class="fas fa-video"></i>
+                            Join meeting
+                        </a>
+
+                        <div th:unless="${#strings.startsWith(applicantDetail.interviewSchedule.get().locationDetail, 'http')}"
+                             class="data-value">
+                            <i class="fas fa-map-marker-alt me-1" style="color: var(--primary);"></i>
+                            <span th:text="${applicantDetail.interviewSchedule.get().locationDetail}">Room 301, Building A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="section-title">
+                <i class="fas fa-user-circle"></i>
+                Personal Details
+            </h5>
+
+            <div class="row mb-3">
+                <div class="col-md-6 info-card-item">
+                    <div class="info-icon"><i class="fas fa-user"></i></div>
+                    <div class="info-content">
+                        <div class="label">Full name</div>
+                        <div class="value" th:text="${user.personalInfo.fullName}">Nguyen Van A</div>
+                    </div>
+                </div>
+                <div class="col-md-6 info-card-item">
+                    <div class="info-icon"><i class="fas fa-calendar-day"></i></div>
+                    <div class="info-content">
+                        <div class="label">Applied on</div>
+                        <div class="value" th:text="${#temporals.format(applicantDetail.applicationDate, 'dd MMM yyyy, HH:mm')}">20 Oct 2025</div>
+                    </div>
+                </div>
+                <div class="col-md-6 info-card-item">
+                    <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="info-content">
+                        <div class="label">Email</div>
+                        <div class="value" th:text="${user.contactInfo.email}">email@example.com</div>
+                    </div>
+                </div>
+                <div class="col-md-6 info-card-item">
+                    <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                    <div class="info-content">
+                        <div class="label">Phone</div>
+                        <div class="value" th:text="${user.contactInfo.phoneNumber}">0912345678</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="section-title">
+                    <i class="fas fa-file-alt"></i>
+                    Cover letter
+                </h5>
+                <div class="cover-letter-container">
+                    <div class="cover-letter-text" th:text="${applicantDetail.coverLetter}">
+                        I am writing to express my interest...
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn-modern btn-resume-modern"
+                        id="downloadResumeBtn"
+                        th:if="${applicantDetail.resumeUrl}"
+                        th:attr="data-url=${applicantDetail.resumeUrl}">
+                    <i class="fas fa-file-arrow-down"></i>
+                    View / Download Resume
+                </button>
+
+                <button class="btn-modern btn-withdraw-modern"
+                        th:if="${applicantDetail.currentStatus.name() != 'WITHDRAWN' && applicantDetail.currentStatus.name() != 'REJECTED' && applicantDetail.currentStatus.name() != 'HIRED'}"
+                        th:attr="onclick=|prepareWithdrawModal(
+                                ${applicantDetail.applicationId},
+                                '${#strings.escapeJavaScript(applicantDetail.jobTitle)}',
+                                '${#strings.escapeJavaScript(applicantDetail.jobCompanyName)}',
+                                '${#temporals.format(applicantDetail.applicationDate, 'dd MMM yyyy')}'
+                            )|">
+                    <i class="fas fa-times-circle"></i>
+                    Withdraw Application
+                </button>
+            </div>
+        </div>
+
+        <div class="col-lg-4 detail-sidebar-col">
+
+            <div class="status-card-center fade-in-up delay-1">
+                <p class="status-label-sm">Current status</p>
+                <span class="status-badge-xl"
+                      th:classappend="${
+                        applicantDetail.currentStatus.name() == 'PENDING' ? ' status-pending' :
+                        applicantDetail.currentStatus.name() == 'INTERVIEW_SCHEDULED' ? ' status-interviewed' :
+                        applicantDetail.currentStatus.name() == 'SHORTLISTED' ? ' status-shortlisted' :
+                        applicantDetail.currentStatus.name() == 'HIRED' ? ' status-hired' :
+                        applicantDetail.currentStatus.name() == 'WITHDRAWN' ? ' status-withdrawn' : ' status-rejected'
+                      }">
+                    <i th:if="${applicantDetail.currentStatus.name() == 'PENDING'}" class="fas fa-clock"></i>
+                    <i th:if="${applicantDetail.currentStatus.name() == 'INTERVIEW_SCHEDULED'}" class="fas fa-calendar-check"></i>
+                    <i th:if="${applicantDetail.currentStatus.name() == 'SHORTLISTED'}" class="fas fa-star"></i>
+                    <i th:if="${applicantDetail.currentStatus.name() == 'HIRED'}" class="fas fa-handshake"></i>
+                    <i th:if="${applicantDetail.currentStatus.name() == 'REJECTED'}" class="fas fa-circle-xmark"></i>
+                    <i th:if="${applicantDetail.currentStatus.name() == 'WITHDRAWN'}" class="fas fa-ban"></i>
+                    <span th:text="${applicantDetail.currentStatus.label}">PENDING</span>
+                </span>
+            </div>
+
+            <h6 class="fw-bold mb-4 d-flex align-items-center gap-2" style="color: var(--text-main)">
+                <i class="fas fa-stream" style="color: var(--primary)"></i>
+                Activity History
+            </h6>
+
+            <div class="timeline-modern fade-in-up delay-2">
+                <div th:each="log, iterStat : ${applicantDetail.publicLogs}"
+                     class="tm-item"
+                     th:classappend="${iterStat.index == 0} ? ' active' : ''">
+                    <div class="tm-icon-box"></div>
+
+                    <div class="tm-content">
+                        <div class="tm-title" th:text="${log.statusTitle}">Application submitted</div>
+                        <div class="tm-date">
+                            <i class="far fa-clock"></i>
+                            <span th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy, HH:mm')}">10 mins ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- ================================================== -->
+<!-- ✨ WITHDRAW CONFIRMATION MODAL (Adapted from my-application.html) ✨ -->
+<!-- ================================================== -->
+<div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 pt-2">
+                <div class="row g-0">
+                    <div class="col-md-5 pe-md-4 border-end border-light d-flex flex-column justify-content-center">
+                        <div class="text-center mb-4">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px; background: var(--primary-soft, #fff7ed); color: var(--primary, #f97316);">
+                                <i class="fas fa-user-times fa-2x"></i>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-1">Withdraw Application?</h4>
+                            <p class="text-muted small mb-0">This action is permanent</p>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 border border-light">
+                            <div class="small text-uppercase text-muted fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">You are withdrawing from:</div>
+                            <div class="fw-bold text-dark mb-2" id="withdraw-job-title" style="font-size: 1.15rem; line-height: 1.3;">Job Title</div>
+                            <div class="d-flex flex-column gap-2 small">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted"><i class="far fa-building me-1"></i>Company:</span>
+                                    <span id="withdraw-company-name" class="fw-semibold text-dark">Company Name</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted"><i class="far fa-calendar me-1"></i>Applied on:</span>
+                                    <span id="withdraw-applied-date" class="fw-semibold text-dark">--/--/----</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7 ps-md-4 d-flex flex-column mt-4 mt-md-0">
+                        <h6 class="fw-bold mb-3" style="color: #92400e;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Please be aware
+                        </h6>
+
+                        <div class="alert mb-4 py-2" style="background-color: var(--primary-soft, #fff7ed); border: 1px solid rgba(255, 107, 53, 0.2);">
+                            <p class="small fw-bold mb-2" style="color: var(--primary-dark, #ea580c);"><i class="fas fa-info-circle me-1"></i>By withdrawing, you confirm that:</p>
+                            <ul class="list-unstyled small text-dark mb-0 ps-2">
+                                <li class="mb-1"><i class="fas fa-times text-danger me-2" style="width: 14px;"></i>You will no longer be considered for this position.</li>
+                                <li class="mb-1"><i class="fas fa-bell text-danger me-2" style="width: 14px;"></i>The company will be notified of your withdrawal.</li>
+                                <li><i class="fas fa-ban text-danger me-2" style="width: 14px;"></i>This action cannot be undone.</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="form-check bg-light p-3 rounded-3 mb-3">
+                                <input class="form-check-input mt-1" type="checkbox" id="confirm-withdraw-checkbox" style="cursor: pointer; border-width: 2px;">
+                                <label class="form-check-label small fw-semibold text-dark user-select-none" for="confirm-withdraw-checkbox" style="cursor: pointer; line-height: 1.4;">
+                                    I understand the consequences and wish to proceed.
+                                </label>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-light flex-grow-1 fw-semibold border" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn flex-grow-1 fw-semibold shadow-sm text-white" id="confirm-withdraw-btn" onclick="executeWithdraw()" disabled style="background-color: var(--primary); border-color: var(--primary);">
+                                    <i class="fas fa-user-times me-1"></i>Withdraw Application
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    // ==================================================
+    // ✨ WITHDRAW LOGIC (Adapted from my-application.html) ✨
+    // ==================================================
+    let applicationToWithdrawId = null;
+    const withdrawModalElement = document.getElementById('withdrawModal');
+    const withdrawModal = new bootstrap.Modal(withdrawModalElement);
+    const withdrawCheckbox = document.getElementById('confirm-withdraw-checkbox');
+    const withdrawConfirmBtn = document.getElementById('confirm-withdraw-btn');
+
+    withdrawCheckbox.addEventListener('change', function() {
+        withdrawConfirmBtn.disabled = !this.checked;
+    });
+
+    function prepareWithdrawModal(id, jobTitle, companyName, appliedDate) {
+        applicationToWithdrawId = id;
+        withdrawCheckbox.checked = false;
+        withdrawConfirmBtn.disabled = true;
+
+        // Populate modal with data
+        document.getElementById('withdraw-job-title').textContent = jobTitle;
+        document.getElementById('withdraw-company-name').textContent = companyName;
+        document.getElementById('withdraw-applied-date').textContent = appliedDate;
+
+        withdrawModal.show();
+    }
+
+    function executeWithdraw() {
+        if (!applicationToWithdrawId) return;
+
+        withdrawConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Withdrawing...';
+        withdrawConfirmBtn.disabled = true;
+
+        fetch(`/jobseeker/application/${applicationToWithdrawId}/withdraw`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken }
+            })
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) {
+                        // Throw error to be caught by .catch block, using message from backend
+                        throw new Error(data.message || `HTTP error! status: ${res.status}`);
+                    }
+                    return data;
+                })
+                .then(data => {
+                    withdrawModal.hide();
+                    if (data.message) {
+                        showToast("Application withdrawn successfully", 'success');
+                        document.querySelector('main').style.transition = 'opacity 0.4s';
+                        document.querySelector('main').style.opacity = '0';
+                        // Redirect back to the list view after success
+                        setTimeout(() => window.location.reload(), 500);
+                    }
+                })
+                .catch(err => {
+                    withdrawModal.hide();
+                    // Show specific error from backend, or a generic one
+                    showToast(err.message || "An unexpected error occurred.", 'error');
+                    // Reset button state on error
+                    withdrawConfirmBtn.innerHTML = '<i class="fas fa-user-times me-1"></i>Withdraw Application';
+                    withdrawConfirmBtn.disabled = false; // Re-enable based on checkbox state after a moment
+                    setTimeout(() => { withdrawConfirmBtn.disabled = !withdrawCheckbox.checked; }, 100);
+                });
+    }
+
+    // ==================================================
+    // ✨ [IMPROVED] DOWNLOAD RESUME LOGIC (Standardized) ✨
+    // ==================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const downloadBtn = document.getElementById('downloadResumeBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('data-url');
+
+                if (!url) {
+                    showToast('Resume file not found.', 'error');
+                    return;
+                }
+
+                showToast('Preparing your download... Please wait.', 'info');
+
+                // Simulate a delay for better UX before opening the file
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                    showToast('Download should have started!', 'success');
+                }, 1500);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Review Detail</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/whole.css" rel="stylesheet">
+  <link href="/css/profile-modern.css" rel="stylesheet"> <script src="/js/FetchNotification.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+  <style>
+    /* Custom CSS */
+    body {
+      background-color: #f8f9fa;
+
+    }
+
+    .container {
+      max-width: 900px;
+      margin-top: 30px;
+      margin-bottom: 50px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: white;
+      padding: 25px;
+      border-bottom: none;
+    }
+
+    .card-header h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+
+    .card-header .subtitle {
+      opacity: 0.9;
+      font-size: 0.95rem;
+      margin-top: 5px;
+    }
+
+    .card-body {
+      padding: 30px;
+    }
+
+    .list-group-item {
+      border: none;
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .list-group-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-group-item strong {
+      color: #495057;
+      font-weight: 600;
+      min-width: 150px;
+      flex-shrink: 0;
+    }
+
+    .list-group-item span {
+      flex: 1;
+      text-align: right;
+      color: #6c757d;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-approved {
+      color: #28a745;
+      background-color: rgba(40, 167, 69, 0.1);
+      border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .status-rejected {
+      color: #dc3545;
+      background-color: rgba(220, 53, 69, 0.1);
+      border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-interviewed {
+      color: #17a2b8;
+      background-color: rgba(23, 162, 184, 0.1);
+      border: 1px solid rgba(23, 162, 184, 0.2);
+    }
+
+    .status-pending {
+      color: #ffc107;
+      background-color: rgba(255, 193, 7, 0.1);
+      border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    .status-badge i {
+      font-size: 0.8rem;
+    }
+
+    /* Job Description */
+    .job-description-container {
+      width: 100%;
+    }
+
+    .job-description-text {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 4px solid #667eea;
+      line-height: 1.7;
+      color: #495057;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .job-description-text.expandable {
+      max-height: 150px;
+      overflow: hidden;
+      position: relative;
+      transition: max-height 0.4s ease;
+    }
+
+    .job-description-text.expandable.expanded {
+      max-height: none;
+    }
+
+    .job-description-text.expandable:not(.expanded)::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: linear-gradient(transparent, #f8f9fa);
+      pointer-events: none;
+    }
+
+    .read-more-btn {
+      color: #667eea !important;
+      text-decoration: none !important;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      padding: 8px 0 !important;
+    }
+
+    .read-more-btn:hover {
+      color: #764ba2 !important;
+      text-decoration: underline !important;
+      transform: translateY(-1px);
+    }
+
+    /* Review Comments */
+    .review-comments {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 10px;
+      padding: 20px;
+      color: #856404;
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .review-comments::before {
+      content: '"';
+      font-size: 2rem;
+      color: #ffc107;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .review-comments::after {
+      content: '"';
+      font-size: 2rem;
+      color: #ffc107;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn-custom {
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 150px;
+      justify-content: center;
+    }
+
+    .btn-view-job {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      color: white;
+    }
+
+    .btn-view-job:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(6, 182, 212, 0.4);
+      color: white;
+    }
+
+
+    .btn-back {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-back:hover {
+      background-color: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+      color: white;
+    }
+
+    /* Loading State */
+    .btn-loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn-loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        margin-top: 15px;
+        padding: 0 15px;
+      }
+
+      .card-body {
+        padding: 20px;
+      }
+
+      .list-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .list-group-item span {
+        text-align: left;
+      }
+
+      .job-description-text.expandable {
+        max-height: 100px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn-custom {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+
+    /* Animation for page load */
+    .card {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Accessibility improvements */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus styles for accessibility */
+    .read-more-btn:focus,
+    .btn-custom:focus {
+      outline: 2px solid #667eea;
+      outline-offset: 2px;
+    }/* Review Comments Expandable */
+    .review-comments-container {
+      width: 100%;
+    }
+
+    .review-comments.expandable-review {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 10px;
+      padding: 20px;
+      color: #856404;
+      font-style: italic;
+      line-height: 1.6;
+      position: relative;
+      max-height: 120px;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .review-comments.expandable-review.expanded {
+      max-height: none;
+    }
+
+    .review-comments.expandable-review:not(.expanded)::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(transparent, #fff3cd);
+      pointer-events: none;
+    }
+
+    .review-comments.expandable-review::before {
+      content: '"';
+      font-size: 2rem;
+      color: #ffc107;
+      font-weight: bold;
+      line-height: 1;
+      position: absolute;
+      top: 5px;
+      left: 10px;
+    }
+
+    .review-comments.expandable-review::after {
+      content: '"';
+      font-size: 2rem;
+      color: #ffc107;
+      font-weight: bold;
+      line-height: 1;
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+    }
+
+    .review-toggle-btn {
+      color: #856404 !important;
+      text-decoration: none !important;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      padding: 8px 0 !important;
+    }
+
+    .review-toggle-btn:hover {
+      color: #664d03 !important;
+      text-decoration: underline !important;
+      transform: translateY(-1px);
+    }
+
+    /* Responsive cho review comments */
+    @media (max-width: 768px) {
+      .review-comments.expandable-review {
+        max-height: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Header -->
+<div th:replace="fragments/headerAndFooter :: header"></div>
+<main class="flex-grow-1">
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-file-alt me-2"></i>
+        Application Review Detail
+      </h3>
+      <div class="subtitle">
+        Detailed review information for your job application
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div th:if="${applicationReview != null}">
+        <ul class="list-group list-group-flush">
+          <!-- Applicant Name -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-user me-2"></i>Applicant Name:</strong>
+            <span th:text="${applicationReview.applicant.user.fullName}">John Doe</span>
+          </li>
+
+          <!-- Job Title -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-briefcase me-2"></i>Job Title:</strong>
+            <span th:text="${applicationReview.applicant.jobPosting.title}">Software Developer</span>
+          </li>
+
+          <!-- Company -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-building me-2"></i>Company:</strong>
+            <span th:text="${applicationReview.applicant.jobPosting.company.name}">Tech Company</span>
+          </li>
+
+          <!-- Application Date -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-calendar me-2"></i>Application Date:</strong>
+            <span th:text="${#temporals.format(applicationReview.applicant.applicationDate, 'dd/MM/yyyy HH:mm')}">15/06/2025 14:30</span>
+          </li>
+
+          <!-- Status -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
+            <span th:switch="${applicationReview.applicant.status}">
+                                <span th:case="'SHORTLISTED'" class="status-badge status-approved">
+                                    <i class="fas fa-check-circle"></i>SHORTLISTED
+                                </span>
+                                <span th:case="'REJECTED'" class="status-badge status-rejected">
+                                    <i class="fas fa-times-circle"></i>REJECTED
+                                </span>
+                                <span th:case="'INTERVIEWED'" class="status-badge status-interviewed">
+                                    <i class="fas fa-user-tie"></i>INTERVIEWED
+                                </span>
+                                <span th:case="*" class="status-badge status-pending">
+                                    <i class="fas fa-clock"></i><span th:text="${applicationReview.applicant.status}">PENDING</span>
+                                </span>
+                            </span>
+          </li>
+
+          <!-- Job Description -->
+          <li class="list-group-item" style="flex-direction: column; align-items: flex-start;">
+            <strong><i class="fas fa-file-text me-2"></i>Job Description:</strong>
+            <div class="job-description-container mt-3">
+              <div class="job-description-text expandable"
+                   th:id="'desc-' + ${applicationReview.applicant.jobPosting.id}"
+                   th:utext="${#strings.replace(applicationReview.applicant.jobPosting.description, '\n', '<br>')}"
+                   role="region"
+                   aria-label="Job description">
+                Developing and maintaining web applications...
+              </div>
+              <button class="btn btn-link read-more-btn"
+                      th:onclick="'toggleDescription(\'desc-' + ${applicationReview.applicant.jobPosting.id} + '\')'"
+                      th:aria-controls="'desc-' + ${applicationReview.applicant.jobPosting.id}"
+                      aria-expanded="false">
+                <i class="fas fa-chevron-down me-1"></i>Read More
+              </button>
+
+            </div>
+          </li>
+
+          <!-- Review Date -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-calendar-check me-2"></i>Review Date:</strong>
+            <span th:text="${#temporals.format(applicationReview.reviewDate, 'dd/MM/yyyy HH:mm')}">16/06/2025 10:15</span>
+          </li>
+
+
+          <!-- Review Comments -->
+          <li class="list-group-item" style="flex-direction: column; align-items: flex-start;">
+            <strong><i class="fas fa-comments me-2"></i>Review Comments:</strong>
+            <div class="review-comments-container mt-3">
+              <div class="review-comments expandable-review"
+                   th:id="'review-' + ${applicationReview.id}"
+                   th:text="${applicationReview.reviewComments}"
+                   role="region"
+                   aria-label="Review comments">
+                Great candidate with excellent technical skills. Looking forward to the interview process.
+              </div>
+              <button class="btn btn-link read-more-btn review-toggle-btn"
+                      th:onclick="'toggleReviewComments(\'review-' + ${applicationReview.id} + '\')'"
+                      th:aria-controls="'review-' + ${applicationReview.id}"
+                      aria-expanded="false">
+                <i class="fas fa-chevron-down me-1"></i>View All
+              </button>
+            </div>
+          </li>
+
+
+          <!-- Reviewer -->
+          <li class="list-group-item">
+            <strong><i class="fas fa-user-check me-2"></i>Reviewed by:</strong>
+            <span th:text="${applicationReview.reviewer.name}">HR Department</span>
+          </li>
+        </ul>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <a th:href="@{/jobseeker/job-detail/{id}(id=${applicationReview.applicant.jobPosting.id})}"
+             class="btn-custom btn-view-job"
+             onclick="handleButtonClick(this, 'Loading...')">
+            <i class="fas fa-external-link-alt"></i>
+            <span>View Job Details</span>
+          </a>
+
+          <a href="javascript:history.back()"
+             class="btn-custom btn-back">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Applications</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div th:if="${applicationReview == null}" class="text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+        <h4>Review Not Found</h4>
+        <p class="text-muted">The application review you're looking for doesn't exist or has been removed.</p>
+        <a href="javascript:history.back()" class="btn-custom btn-back mt-3">
+          <i class="fas fa-arrow-left"></i>
+          <span>Go Back</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+<!-- Footer -->
+<div th:replace="fragments/headerAndFooter :: footer"></div>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Toggle job description expand/collapse
+  function toggleDescription(elementId) {
+    const element = document.getElementById(elementId);
+    const button = element.nextElementSibling;
+    const icon = button.querySelector('i');
+
+    if (element.classList.contains('expanded')) {
+      element.classList.remove('expanded');
+      button.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Read More';
+      button.setAttribute('aria-expanded', 'false');
+    } else {
+      element.classList.add('expanded');
+      button.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Read Less';
+      button.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Handle button loading state
+  function handleButtonClick(button, loadingText) {
+    const originalContent = button.innerHTML;
+    button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+    button.classList.add('btn-loading');
+
+    // Reset after navigation (fallback)
+    setTimeout(() => {
+      button.innerHTML = originalContent;
+      button.classList.remove('btn-loading');
+    }, 3000);
+  }
+
+  // Auto-hide read more button if content is short
+  document.addEventListener('DOMContentLoaded', function() {
+    const descriptions = document.querySelectorAll('.job-description-text.expandable');
+
+    descriptions.forEach(function(desc) {
+      // Check if content height is less than max-height
+      if (desc.scrollHeight <= 150) {
+        const button = desc.nextElementSibling;
+        if (button && button.classList.contains('read-more-btn')) {
+          button.style.display = 'none';
+        }
+      }
+    });
+
+    // Add smooth scroll behavior
+    document.documentElement.style.scrollBehavior = 'smooth';
+  });
+
+  // Keyboard navigation support
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      // Close any expanded descriptions
+      const expandedDescs = document.querySelectorAll('.job-description-text.expanded');
+      expandedDescs.forEach(desc => {
+        const button = desc.nextElementSibling;
+        if (button) {
+          button.click();
+        }
+      });
+    }
+  });
+
+  // Add loading animation to page
+  window.addEventListener('load', function() {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.3s ease';
+
+    setTimeout(() => {
+      document.body.style.opacity = '1';
+    }, 100);
+  });// Toggle review comments expand/collapse
+  function toggleReviewComments(elementId) {
+    const element = document.getElementById(elementId);
+    const button = element.nextElementSibling;
+
+    if (element.classList.contains('expanded')) {
+      element.classList.remove('expanded');
+      button.innerHTML = '<i class="fas fa-chevron-down me-1"></i>View All';
+      button.setAttribute('aria-expanded', 'false');
+    } else {
+      element.classList.add('expanded');
+      button.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show Less';
+      button.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Cập nhật DOMContentLoaded event
+  document.addEventListener('DOMContentLoaded', function() {
+    const descriptions = document.querySelectorAll('.job-description-text.expandable');
+    const reviewComments = document.querySelectorAll('.review-comments.expandable-review');
+
+    // Handle job descriptions
+    descriptions.forEach(function(desc) {
+      if (desc.scrollHeight <= 150) {
+        const button = desc.nextElementSibling;
+        if (button && button.classList.contains('read-more-btn')) {
+          button.style.display = 'none';
+        }
+      }
+    });
+
+    // Handle review comments
+    reviewComments.forEach(function(review) {
+      if (review.scrollHeight <= 120) {
+        const button = review.nextElementSibling;
+        if (button && button.classList.contains('review-toggle-btn')) {
+          button.style.display = 'none';
+        }
+      }
+    });
+
+    document.documentElement.style.scrollBehavior = 'smooth';
+  });
+
+</script>
+</body>
+</html>

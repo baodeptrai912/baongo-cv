@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Delete Modal</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .trigger-btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(37, 117, 252, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .trigger-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(37, 117, 252, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nút để kích hoạt Modal -->
+<button class="trigger-btn" onclick="testDelete()">
+    <i class="fas fa-trash-alt me-2"></i> Test Delete Modal
+</button>
+
+<div id="result" style="margin-top: 20px; font-weight: bold; color: #333;"></div>
+
+<!-- Script Modal của bạn -->
+<script>
+    (() => {
+        // ---- 1. ĐỊNH NGHĨA CSS CHO MODAL ----
+        const deleteModalStyles = `
+            .delete-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.75);
+                backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1070;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .delete-modal-overlay.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .delete-modal-box {
+                background: #ffffff;
+                border-radius: 24px;
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+                width: 90%;
+                max-width: 450px;
+                overflow: hidden;
+                transform: scale(0.8) translateY(30px);
+                opacity: 0;
+                transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                position: relative;
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .delete-modal-overlay.show .delete-modal-box {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+
+            /* Header Gradient Đẹp hơn */
+            .delete-modal-header {
+                background: linear-gradient(135deg, #ff5f6d, #ffc371);
+                /* Hoặc dùng màu đỏ thuần như cũ: background: linear-gradient(135deg, #ff6b6b, #ee5a6f); */
+                background: linear-gradient(135deg, #ef4444, #f87171);
+                color: white;
+                padding: 2.5rem 2rem 2rem;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Hiệu ứng sóng nhẹ ở header */
+            .delete-modal-header::after {
+                content: '';
+                position: absolute;
+                bottom: -20px;
+                left: 0;
+                width: 100%;
+                height: 40px;
+                background: white;
+                border-radius: 50% 50% 0 0;
+                transform: scaleX(1.5);
+            }
+
+            .warning-icon-container {
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 1rem;
+                position: relative;
+                z-index: 2;
+            }
+
+            .icon-circle {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                border: 2px solid rgba(255, 255, 255, 0.4);
+                animation: pulse 2s infinite;
+                top: 0; left: 0;
+            }
+
+            .icon-circle:nth-child(2) {
+                animation-delay: 0.4s;
+            }
+
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 0.8; }
+                100% { transform: scale(1.6); opacity: 0; }
+            }
+
+            .warning-icon {
+                position: relative;
+                width: 80px;
+                height: 80px;
+                background: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                z-index: 3;
+            }
+
+            .warning-icon i {
+                font-size: 36px;
+                color: #ef4444;
+                animation: shake 0.8s ease-in-out;
+            }
+
+            @keyframes shake {
+                0%, 100% { transform: rotate(0deg); }
+                20% { transform: rotate(-15deg); }
+                40% { transform: rotate(15deg); }
+                60% { transform: rotate(-10deg); }
+                80% { transform: rotate(10deg); }
+            }
+
+            .delete-modal-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin: 0;
+                position: relative;
+                z-index: 2;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .delete-modal-body {
+                padding: 1.5rem 2rem 2rem;
+                text-align: center;
+                color: #4b5563;
+            }
+
+            .item-name-box {
+                background: #fee2e2;
+                padding: 15px;
+                border-radius: 12px;
+                margin: 1rem 0;
+                border: 1px solid #fecaca;
+                color: #b91c1c;
+                font-weight: 600;
+                font-size: 1.1rem;
+                word-break: break-word;
+            }
+
+            .warning-text {
+                font-size: 0.9rem;
+                color: #ef4444;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                margin-top: 1rem;
+                font-weight: 500;
+            }
+
+            .delete-modal-footer {
+                padding: 0 2rem 2rem;
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+            }
+
+            .delete-modal-btn {
+                border: none;
+                padding: 12px 28px;
+                border-radius: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .btn-cancel {
+                background: #f3f4f6;
+                color: #4b5563;
+            }
+
+            .btn-cancel:hover {
+                background: #e5e7eb;
+                color: #1f2937;
+            }
+
+            .btn-confirm-delete {
+                background: #ef4444;
+                color: white;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            }
+
+            .btn-confirm-delete:hover {
+                background: #dc2626;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+            }
+
+            .delete-modal-close-btn {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+                z-index: 10;
+            }
+
+            .delete-modal-close-btn:hover {
+                background: rgba(255, 255, 255, 0.4);
+            }
+
+        `;
+
+        // ---- 2. TIÊM CSS VÀO TRANG ----
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = deleteModalStyles;
+        document.head.appendChild(styleSheet);
+
+        let onConfirmCallback = null;
+
+        // ---- 3. HÀM ĐỂ HIỂN THỊ MODAL ----
+        function showDeleteConfirmation(itemName, onConfirm) {
+            // Xóa modal cũ nếu tồn tại
+            const existingOverlay = document.querySelector('.delete-modal-overlay');
+            if (existingOverlay) existingOverlay.remove();
+
+            onConfirmCallback = onConfirm;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'delete-modal-overlay';
+            overlay.innerHTML = `
+                <div class="delete-modal-box">
+                    <button class="delete-modal-close-btn"><i class="fas fa-times"></i></button>
+                    <div class="delete-modal-header">
+                        <div class="warning-icon-container">
+                            <div class="icon-circle"></div>
+                            <div class="icon-circle"></div>
+                            <div class="warning-icon">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                        </div>
+                        <h5 class="delete-modal-title">Delete Item?</h5>
+                    </div>
+                    <div class="delete-modal-body">
+                        <p style="margin-bottom:0.5rem">You are about to permanently delete:</p>
+                        <div class="item-name-box">
+                            <span id="item-to-delete-name">${itemName}</span>
+                        </div>
+                        <p class="warning-text">
+                            <i class="fas fa-exclamation-circle"></i>
+                            This action cannot be undone.
+                        </p>
+                    </div>
+                    <div class="delete-modal-footer">
+                        <button class="delete-modal-btn btn-cancel">
+                            Cancel
+                        </button>
+                        <button class="delete-modal-btn btn-confirm-delete">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Animation in
+            requestAnimationFrame(() => {
+                overlay.classList.add('show');
+            });
+
+            // Hàm đóng modal
+            const hide = () => {
+                overlay.classList.remove('show');
+                overlay.addEventListener('transitionend', () => {
+                    if (overlay.parentNode) overlay.remove();
+                    onConfirmCallback = null;
+                }, { once: true });
+            };
+
+            // Sự kiện nút Confirm
+            overlay.querySelector('.btn-confirm-delete').addEventListener('click', () => {
+                if (typeof onConfirmCallback === 'function') {
+                    onConfirmCallback();
+                }
+                hide();
+            });
+
+            // Sự kiện nút Cancel & Close
+            overlay.querySelector('.btn-cancel').addEventListener('click', hide);
+            overlay.querySelector('.delete-modal-close-btn').addEventListener('click', hide);
+
+            // Click outside để đóng
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) hide();
+            });
+        }
+
+        // ---- 4. ĐƯA HÀM RA GLOBAL ----
+        window.DeleteModal = {
+            show: showDeleteConfirmation
+        };
+
+    })();
+
+    // HÀM TEST ĐƯỢC GỌI TỪ NÚT BẤM
+    function testDelete() {
+        DeleteModal.show('Bachelor of Computer Science', () => {
+            // Giả lập hành động xóa thành công
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Deleting...';
+            resultDiv.style.color = '#e67e22';
+
+            setTimeout(() => {
+                resultDiv.innerHTML = '✅ Item deleted successfully!';
+                resultDiv.style.color = '#27ae60';
+            }, 1000);
+        });
+    }
+</script>
+</body>
+</html>

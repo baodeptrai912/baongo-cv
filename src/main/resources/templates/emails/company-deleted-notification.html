@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Status Update - BaoNgoCV</title>
+    <style>
+        /* --- BASE STYLES (Giống hệt các email trước) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Cam Thương Hiệu */
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #ea580c 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-icon { font-size: 32px; margin-right: 10px; }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #ea580c; font-weight: 700; }
+
+        /* Info Box (Style chuẩn) */
+        .info-box {
+            background-color: #fff7ed; /* Cam rất nhạt */
+            border-left: 4px solid #f97316; /* Viền cam */
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            font-size: 15px;
+            color: #4b5563;
+        }
+
+        .info-box strong { color: #9a3412; display: block; margin-bottom: 5px; }
+        .info-box ul { margin: 0; padding-left: 20px; margin-top: 5px; }
+        .info-box li { margin-bottom: 5px; }
+
+        /* Message Text */
+        .message-text {
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* CTA Button (3D Style) */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.25);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar (Thanh cam đặc trưng) */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><span class="header-icon">📢</span> Company Update</h1>
+        <p>Important information about a company you follow</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${applicantName}">User</span>,
+        </div>
+
+        <p class="message-text">
+            We are writing to let you know that <strong><span th:text="${companyName}">[Company Name]</span></strong> is no longer active on the BaoNgoCV platform.
+        </p>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <strong>What does this mean for you?</strong>
+            <ul>
+                <li>All job postings from this company have been removed.</li>
+                <li>Any active applications to this company have been closed.</li>
+                <li>You will no longer receive alerts about this company.</li>
+            </ul>
+        </div>
+
+        <p class="message-text">
+            We know this might be disappointing, especially if you had an active application. However, new opportunities are posted every day!
+        </p>
+
+        <!-- CTA Button -->
+        <a th:href="${websiteUrl} + '/jobseeker/job-search'" class="cta-button">
+            🔍 Explore New Jobs
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Thank you for being a valued part of our community.</p>
+            <p style="margin-top: 5px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${currentYear}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Search Jobs</a> |
+            <a href="#">Help Center</a> |
+            <a href="#">Contact Support</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

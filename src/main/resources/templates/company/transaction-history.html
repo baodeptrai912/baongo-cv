@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Transaction History</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/AccountTier.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/PaymentSuccessPopup.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        :root {
+            /* Enhanced Color System */
+            --primary-color: #ff6b35;
+            --primary-hover: #e03e00;
+            --primary-light: #fff7ed;
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border-color: #E2E8F0;
+            --border-hover: #CBD5E1;
+
+            /* Enhanced Status Colors */
+            --success-bg: #ECFDF5;
+            --success-text: #059669;
+            --success-border: #A7F3D0;
+            --pending-bg: #FFFBEB;
+            --pending-text: #D97706;
+            --pending-border: #FDE68A;
+            --failed-bg: #FEF2F2;
+            --failed-text: #DC2626;
+            --failed-border: #FECACA;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+            /* Transitions */
+            --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            transition: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Layout */
+        .main-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .page-header-custom {
+            position: static !important;
+            top: auto !important;
+            z-index: auto !important;
+            background-color: white;
+            padding: 1rem 0 1.5rem; /* Giảm padding top, tăng bottom */
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2.5rem;
+        }
+
+        /* Đảm bảo container bên trong cũng không bị ảnh hưởng */
+        .page-header-custom .container,
+        .page-header-custom > div {
+            position: static !important;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .page-header-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+        }
+
+        .stat-item:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.total {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .stat-icon.successful {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .stat-icon.pending {
+            background: var(--pending-bg);
+            color: var(--pending-text);
+        }
+
+        .stat-icon.failed {
+            background: var(--failed-bg);
+            color: var(--failed-text);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .stat-subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Enhanced Transaction Card */
+        .transaction-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        /* Table Enhancements */
+        .table-responsive {
+            margin: 0;
+        }
+
+        .transaction-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .transaction-table thead {
+            background: linear-gradient(to bottom, #F8FAFC 0%, #F1F5F9 100%);
+        }
+
+        .transaction-table th {
+            padding: 1rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .transaction-table td {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.9375rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            background: white;
+        }
+
+        .transaction-table tbody tr {
+            transition: all var(--transition-base);
+        }
+
+        .transaction-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .transaction-table tbody tr:hover {
+            background-color: #FAFBFC !important;
+        }
+
+        .transaction-table tbody tr:hover td {
+            background-color: transparent;
+        }
+
+        /* Enhanced Typography */
+        .order-code {
+            font-family: 'Monaco', 'Consolas', 'SF Mono', monospace;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--primary-light) ;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .amount {
+            font-weight: 700;
+            font-size: 1.0625rem;
+            color: var(--text-main);
+        }
+
+        .plan-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .plan-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .plan-cycle {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .plan-cycle::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--text-muted);
+            border-radius: 50%;
+        }
+
+        /* Enhanced Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.875rem;
+            border-radius: 12px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            line-height: 1;
+            border: 1px solid;
+            transition: all var(--transition-base);
+        }
+
+        .status-badge::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-SUCCESSFUL {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border-color: var(--success-border);
+        }
+        .status-SUCCESSFUL::before {
+            background-color: var(--success-text);
+            animation: none;
+        }
+
+        .status-PENDING {
+            background-color: var(--pending-bg);
+            color: var(--pending-text);
+            border-color: var(--pending-border);
+        }
+        .status-PENDING::before {
+            background-color: var(--pending-text);
+        }
+
+        .status-FAILED, .status-CANCELED {
+            background-color: var(--failed-bg);
+            color: var(--failed-text);
+            border-color: var(--failed-border);
+        }
+        .status-FAILED::before, .status-CANCELED::before {
+            background-color: var(--failed-text);
+            animation: none;
+        }
+
+        /* Enhanced Button */
+        .btn-pay {
+            background: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 107, 53, 0.2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-pay:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-pay:active {
+            transform: translateY(0);
+        }
+
+        .btn-pay::before {
+            content: '\f53d'; /* QR code icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        /* Enhanced Empty State */
+        .empty-state {
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #E0E7FF 0%, #F3F4F6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .empty-state h5 {
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+
+        /* Enhanced Pagination */
+        .pagination-container {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(to top, #FAFBFC 0%, white 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pagination {
+            gap: 0.375rem;
+        }
+
+        .pagination .page-link {
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 0.875rem;
+            min-width: 36px;
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .pagination .page-link:hover:not(.active) {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Enhanced Modal */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            background: linear-gradient(to bottom, white 0%, #FAFBFC 100%);
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-title::before {
+            content: '\f53d';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        #qrCodeContainer {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 0 0 1px var(--border-color);
+            display: inline-block;
+        }
+
+        .payment-details {
+            text-align: left;
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .detail-value.amount {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .detail-value.order-code {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        /* Spinner container style from jobposting-managing.html */
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Loading State */
+        #contentContainer {
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-responsive {
+            flex: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding: 1.5rem 1rem;
+            }
+
+            .page-header h2 {
+                font-size: 1.5rem;
+            }
+
+
+            .transaction-table {
+                font-size: 0.85rem;
+            }
+
+            .transaction-table th,
+            .transaction-table td {
+                padding: 0.875rem 1rem;
+            }
+
+            .order-code {
+                font-size: 0.8rem;
+            }
+
+            .amount {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .btn-pay,
+            .pagination-container,
+            .page-header p {
+                display: none !important;
+            }
+
+            .transaction-card {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+        }@media (max-width: 992px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Responsive: 1 cột trên mobile */
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }.stat-subtext {
+             font-size: 0.75rem;
+             color: var(--text-muted);
+             margin-top: 0.25rem;
+         }
+
+        /* THÊM NGAY ĐÂY */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Enhanced Transaction Card */
+        .transaction-card {
+            background: var(--card-bg);
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<!-- NEW CUSTOM HEADER -->
+<header class="page-header-custom">
+    <div class="container">
+        <div>
+            <h1 class="page-title">Transaction History</h1>
+            <p class="page-header-desc mb-0">Track and manage all your payment transactions</p>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <!-- Enhanced Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-icon total">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="totalTransactions" th:text="${response.transactions.totalElements}">-</div>
+                <div class="stat-subtext">All transactions</div>
+            </div>
+        </div>
+
+        <div class="stat-item">
+            <div class="stat-icon successful">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Successful</div>
+                <div class="stat-value" id="successfulTransactions" th:text="${response.successfulCount}">-</div>
+                <div class="stat-subtext">Completed payments</div>
+            </div>
+        </div>
+
+        <div class="stat-item">
+            <div class="stat-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="pendingTransactions" th:text="${response.pendingCount}">-</div>
+                <div class="stat-subtext">Awaiting payment</div>
+            </div>
+        </div>
+
+        <div class="stat-item">
+            <div class="stat-icon failed">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Failed</div>
+                <div class="stat-value" id="failedTransactions" th:text="${response.failedCount}">-</div>
+                <div class="stat-subtext">Unsuccessful</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Card -->
+    <div class="transaction-card">
+        <!-- SỬA ĐỔI: Đổi tên id và thêm một div con `table-wrapper` -->
+        <div id="contentContainer"></div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" id="paginationNav"
+             th:style="${response.transactions.totalPages <= 1 ? 'display: none' : ''}">
+            <ul class="pagination mb-0" id="paginationList">
+                <!-- JavaScript will render pagination here -->
+            </ul>
+        </div>
+    </div>
+</main>
+
+<!-- Pagination -->
+
+<!-- Enhanced QR Modal -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrModalLabel">Scan to Pay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="qrCodeContainer"></div>
+                <div class="payment-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Amount</span>
+                        <span class="detail-value amount" id="modalAmount"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Reference Code</span>
+                        <span class="detail-value order-code" id="modalOrderCode"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const initialPageData = {
+        currentPage: /*[[${response.transactions.number}]]*/ 0,
+        totalPages: /*[[${response.transactions.totalPages}]]*/ 1
+    };
+
+    let currentPage = initialPageData.currentPage;
+    const MIN_LOADING_TIME = 1000; // Match jobposting-managing.html
+
+    async function loadTransactions(page) {
+        currentPage = page;
+        const contentContainer = document.getElementById('contentContainer');
+
+        // ... (Giữ nguyên phần loading spinner) ...
+        contentContainer.innerHTML = `
+            <div class="spinner-container" style="min-height: 400px;">
+                <div class="spinner-border" role="status" style="color: var(--primary-color); width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>`;
+
+        const startTime = Date.now();
+
+        try {
+            const response = await fetch(`/company/api/transaction-history?page=${page}&size=10&sort=createdAt,desc`);
+            if (!response.ok) throw new Error('Failed to load transactions');
+            const data = await response.json();
+
+            console.log('API Response Data:', data); // Debug log
+
+            updateStats(data);
+
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+            setTimeout(() => {
+                renderContent(data);
+
+                // === SỬA LỖI Ở ĐÂY ===
+                // Lấy totalPages an toàn từ data.transactions.page HOẶC data.transactions
+                const txData = data.transactions;
+                // Kiểm tra xem thông tin page nằm ở đâu (trực tiếp hay lồng trong .page)
+                const totalPages = txData.page ? txData.page.totalPages : txData.totalPages;
+
+                console.log("Total Pages found:", totalPages); // Kiểm tra log này xem ra số 4 chưa
+
+                if (totalPages > 1) {
+                    renderPagination(txData);
+                } else {
+                    const nav = document.getElementById('paginationNav');
+                    if (nav) nav.style.display = 'none';
+                }
+            }, delay);
+
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            showError();
+        }
+    }
+
+    function updateStats(data) {
+        document.getElementById('totalTransactions').textContent = data.transactions.totalElements || 0;
+        document.getElementById('successfulTransactions').textContent = data.successfulCount || 0;
+        document.getElementById('pendingTransactions').textContent = data.pendingCount || 0;
+        document.getElementById('failedTransactions').textContent = data.failedCount || 0;
+    }
+
+    function renderContent(data) {
+        const contentContainer = document.getElementById('contentContainer'); // Vẫn lấy container cha
+
+        // 1. Kiểm tra dữ liệu đầu vào an toàn
+        if (!data || !data.transactions) { // Chỉ cần check transactions là đủ
+            console.warn("No transaction data found");
+            showError(); // Hiển thị lỗi nếu không có dữ liệu
+            return; // Dừng hàm
+        }
+
+        const txs = data.transactions.content;
+
+        if (!txs || txs.length === 0) {
+            contentContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="far fa-folder-open"></i></div>
+                <h5>No transactions yet</h5>
+                <p>Your transaction history will appear here once you make a payment</p>
+            </div>`;
+            return;
+        }
+
+        // 2. Hàm helper để lấy tên hiển thị an toàn (xử lý cả Object lẫn String)
+        const getDisplayName = (enumObj) => {
+            if (!enumObj) return ''; // Xử lý null
+            if (typeof enumObj === 'object' && enumObj.displayName) return enumObj.displayName; // Xử lý Object (@JsonFormat)
+            return enumObj; // Xử lý String (Mặc định)
+        };
+
+        try {
+            const rows = txs.map(tx => `
+            <tr>
+                <td><span class="order-code">${tx.orderCode}</span></td>
+                <td><span class="amount">${formatCurrency(tx.amount)}</span></td>
+                <td>
+                    <div class="plan-info">
+                        <!-- Dùng hàm helper getDisplayName thay vì gọi trực tiếp -->
+                        <span class="plan-name">${getDisplayName(tx.targetTier)}</span>
+                        <span class="plan-cycle">${getDisplayName(tx.billingCycle)}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge status-${tx.status}">${getDisplayName(tx.status)}</span>
+                </td>
+                <td style="color: var(--text-secondary); font-size: 0.875rem;">${formatDate(tx.createdAt)}</td>
+                <td>
+                    ${tx.status === 'PENDING' ? `
+                    <button class="btn-pay"
+                        data-bs-toggle="modal"
+                        data-bs-target="#qrCodeModal"
+                        data-qr-code="${tx.qrCode || ''}"
+                        data-amount="${tx.amount}"
+                        data-order-code="${tx.orderCode}">
+                        Pay Now
+                    </button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+
+            const tableHtml = `
+            <div class="table-responsive">
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Order Code</th>
+                            <th>Amount</th>
+                            <th>Plan Details</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            `;
+            contentContainer.innerHTML = tableHtml; // Ghi đè nội dung
+
+        } catch (e) {
+            console.error("Error rendering transactions:", e);
+            showError(); // Hiển thị lỗi nếu render thất bại
+        }
+    }
+
+
+    function renderPagination(pageData) {
+        const nav = document.getElementById('paginationNav');
+        const list = document.getElementById('paginationList');
+
+        // === SỬA LỖI Ở ĐÂY ===
+        // Chuẩn hóa dữ liệu: Lấy number và totalPages từ đúng chỗ
+        let currentPageNumber = 0;
+        let totalPagesCount = 0;
+
+        if (pageData.page) {
+            // Trường hợp của bạn: Dữ liệu nằm trong object .page
+            currentPageNumber = pageData.page.number;
+            totalPagesCount = pageData.page.totalPages;
+        } else {
+            // Trường hợp mặc định của Spring Page
+            currentPageNumber = pageData.number;
+            totalPagesCount = pageData.totalPages;
+        }
+
+        // Cập nhật biến toàn cục currentPage để logic prev/next hoạt động đúng
+        currentPage = currentPageNumber;
+
+        if (totalPagesCount <= 1) {
+            nav.style.display = 'none';
+            list.innerHTML = '';
+            return;
+        }
+
+        nav.style.display = 'flex';
+
+        // Logic render HTML giữ nguyên, chỉ thay biến
+        let html = `
+        <li class="page-item ${currentPageNumber === 0 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadTransactions(${currentPageNumber - 1}); return false;" aria-label="Previous">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>`;
+
+        const maxVisible = 5;
+        let startPage = Math.max(0, currentPageNumber - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPagesCount - 1, startPage + maxVisible - 1);
+
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(0, endPage - maxVisible + 1);
+        }
+
+        if (startPage > 0) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadTransactions(0); return false;">1</a></li>`;
+            if (startPage > 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+            <li class="page-item ${i === currentPageNumber ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="loadTransactions(${i}); return false;">${i + 1}</a>
+            </li>`;
+        }
+
+        if (endPage < totalPagesCount - 1) {
+            if (endPage < totalPagesCount - 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadTransactions(${totalPagesCount - 1}); return false;">${totalPagesCount}</a></li>`;
+        }
+
+        html += `
+        <li class="page-item ${currentPageNumber === totalPagesCount - 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadTransactions(${currentPageNumber + 1}); return false;" aria-label="Next">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>`;
+
+        list.innerHTML = html;
+    }
+
+
+    function showError() {
+        const contentContainer = document.getElementById('contentContainer');
+        contentContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h5>Unable to load transactions</h5>
+                <p>Please try again later</p>
+            </div>
+        `;
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+    }
+
+    function formatDate(dateString) {
+        const d = new Date(dateString);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Render nội dung ban đầu bằng JavaScript để đồng bộ logic
+        renderContent(/*[[${response}]]*/);
+
+        // Render initial pagination if needed
+        if (initialPageData.totalPages > 1) {
+            renderPagination({
+                number: initialPageData.currentPage,
+                totalPages: initialPageData.totalPages
+            });
+        }
+
+        // QR Modal functionality
+        const modal = document.getElementById('qrCodeModal');
+        const qrContainer = document.getElementById('qrCodeContainer');
+
+        modal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const amount = button.getAttribute('data-amount');
+            const orderCode = button.getAttribute('data-order-code');
+            const qrCode = button.getAttribute('data-qr-code');
+
+            document.getElementById('modalAmount').textContent = formatCurrency(amount);
+            document.getElementById('modalOrderCode').textContent = orderCode;
+
+            qrContainer.innerHTML = '';
+
+            if (qrCode) {
+                new QRCode(qrContainer, {
+                    text: qrCode,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#0F172A',
+                    colorLight: '#FFFFFF',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } else {
+                qrContainer.innerHTML = '<p style="color: var(--text-muted);">QR code not available</p>';
+            }
+        });
+
+        // Clear QR code when modal closes
+        modal.addEventListener('hidden.bs.modal', () => {
+            qrContainer.innerHTML = '';
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>BaoNgoCv - Company Account Settings</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/Notification-filtering.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #ff6b35;
+            --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            --primary-hover: linear-gradient(135deg, #e03e00 0%, #c73500 100%);
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --sidebar-width: 280px;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            /* ✨ [FIX] Ensure body takes full viewport height for sticky footer */
+            min-height: 100vh; 
+        }
+
+        /* LAYOUT STRUCTURE */
+        .account-settings-wrapper {
+            display: flex;
+            gap: 2rem;
+            padding: 3rem 0;
+            align-items: flex-start;
+        }
+
+        /* SIDEBAR NAVIGATION */
+        .settings-sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 100px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .settings-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            color: var(--text-gray);
+            font-weight: 500;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .settings-sidebar .nav-link i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .settings-sidebar .nav-link:hover {
+            background-color: #fff7ed; /* Light orange bg */
+            color: var(--primary-color);
+        }
+
+        .settings-sidebar .nav-link:hover i {
+            transform: translateX(3px);
+        }
+
+        .settings-sidebar .nav-link.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .settings-sidebar .nav-link.text-danger:hover {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .settings-sidebar .nav-link.text-danger.active {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        /* CONTENT AREA */
+        .settings-content {
+            flex: 1;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 2.5rem;
+            border: 1px solid #e2e8f0;
+            /* ✨ [FIX] Set a minimum height to prevent footer jumping when switching sections */
+            min-height: 650px;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* FORM ELEMENTS */
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+        }
+
+        /* BUTTONS */
+        .btn-save-settings {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(255, 107, 53, 0.2);
+        }
+
+        .btn-save-settings:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 107, 53, 0.3);
+            background: var(--primary-hover);
+            color: white;
+        }
+
+        /* DANGER ZONE */
+        .danger-zone {
+            border: 1px solid #fecaca;
+            background-color: #fef2f2;
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .danger-title {
+            color: #991b1b;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-danger-custom {
+            background: white;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-danger-custom:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* EMAIL VERIFICATION BOX */
+        .verification-box {
+            background: #fff7ed;
+            border: 1px dashed var(--primary-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .verification-code-input {
+            font-size: 2rem;
+            letter-spacing: 1rem;
+            text-align: center;
+            max-width: 300px;
+            margin: 1.5rem auto;
+            border: 2px solid #e2e8f0;
+            font-weight: 700;
+        }
+
+        /* TOAST & LOADING */
+        #fullPageLoadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        #fullPageLoadingOverlay.show { display: flex; }
+
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .account-settings-wrapper { flex-direction: column; }
+            .settings-sidebar { width: 100%; position: static; margin-bottom: 1.5rem; }
+            .settings-sidebar .nav { flex-direction: row; overflow-x: auto; padding-bottom: 5px; }
+            .settings-sidebar .nav-link { white-space: nowrap; margin-right: 0.5rem; margin-bottom: 0; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<!-- ✨ [FIX] Add flex-grow-1 to allow this element to expand and push the footer down -->
+<main class="flex-grow-1"> 
+    <div class="container account-settings-wrapper">
+
+        <aside class="settings-sidebar">
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="#companyInfoSection" data-section="companyInfoSection">
+                    <i class="fas fa-building"></i> Profile Info
+                </a>
+                <a class="nav-link" href="#changePasswordSection" data-section="changePasswordSection">
+                    <i class="fas fa-lock"></i> Password
+                </a>
+                <a class="nav-link" href="#notificationSettingsSection" data-section="notificationSettingsSection">
+                    <i class="fas fa-bell"></i> Notifications
+                </a>
+                <hr class="my-2">
+                <a class="nav-link text-danger" href="#deleteAccountSection" data-section="deleteAccountSection">
+                    <i class="fas fa-trash-alt"></i> Delete Account
+                </a>
+            </nav>
+        </aside>
+
+        <section class="settings-content">
+
+            <div id="generalMessage" class="alert alert-dismissible fade show d-none mb-4 shadow-sm" role="alert">
+                <i class="fas me-2"></i> <span id="messageText"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div id="companyInfoSection" class="content-section active">
+                <h2 class="section-title">Company Profile</h2>
+                <p class="section-subtitle">Manage your public presence and company details.</p>
+
+                <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+                    <div class="mb-3">
+                        <i class="fas fa-briefcase fa-3x text-secondary opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold">Advanced Profile Editor</h5>
+                    <p class="text-muted mb-4">Edit logo, description, location, and job postings in our dedicated editor.</p>
+                    <a th:href="@{/company/profile-update}" class="btn btn-save-settings">
+                        Go to Profile Editor <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div id="changePasswordSection" class="content-section">
+                <h2 class="section-title">Security</h2>
+                <p class="section-subtitle">Update your password to keep your account secure.</p>
+
+                <div id="passwordChangeFormContainer" th:classappend="${showEmailVerificationSection} ? 'd-none' : ''">
+                    <form id="changePasswordForm" class="mt-4" style="max-width: 500px;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="mb-4">
+                            <label class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-key text-muted"></i></span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="currentPassword" name="currentPassword" required>
+                            </div>
+                            <div id="currentPasswordError" class="text-danger small mt-1"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="newPassword" name="newPassword" required>
+                            </div>
+                            <div id="newPasswordError" class="text-danger small mt-1"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Confirm New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-check-circle text-muted"></i></span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="confirmNewPassword" name="confirmedNewPassword" required>
+                            </div>
+                            <div id="confirmedNewPasswordError" class="text-danger small mt-1"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-save-settings mt-2" id="updatePasswordButton">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+
+                <div id="emailVerificationContainer" class="d-none verification-box">
+                    <div class="mb-3">
+                        <span class="bg-white p-3 rounded-circle shadow-sm d-inline-block">
+                            <i class="fas fa-envelope-open-text fa-2x text-primary"></i>
+                        </span>
+                    </div>
+                    <h4 class="fw-bold">Verify It's You</h4>
+                    <p class="text-muted mb-4">We sent a 6-digit code to <strong id="userEmailForVerification" th:text="${userEmailForVerification}" class="text-dark"></strong></p>
+
+                    <form id="emailVerificationForm">
+                        <input type="text" class="form-control verification-code-input" id="verificationCode" name="code" placeholder="000000" maxlength="6" pattern="\d{6}" required>
+                        <div id="verificationCodeError" class="text-danger small mb-3"></div>
+
+                        <button type="submit" class="btn btn-save-settings w-100 mb-3" id="verifyEmailButton">
+                            Verify & Change
+                        </button>
+                    </form>
+
+                    <div class="d-flex justify-content-center align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted" id="resendCodeButton">Resend Code</button>
+                        <span id="countdownTimer" class="badge bg-light text-dark border rounded-pill" style="display: none;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="notificationSettingsSection" class="content-section">
+                <h2 class="section-title">Notifications</h2>
+                <p class="section-subtitle">Choose how you want to be notified.</p>
+
+                <form id="notificationSettingsForm" class="mt-4">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">Job Applications</h6>
+                                <p class="text-muted small mb-0">Receive email when candidates apply to your jobs.</p>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" style="width: 3em; height: 1.5em;" id="emailJobApplications" name="emailJobApplications" th:checked="${currentEmailNotificationSetting}">
+                            </div>
+                        </div>
+                    </div>
+
+
+                </form>
+            </div>
+
+            <div id="deleteAccountSection" class="content-section">
+                <h2 class="section-title text-danger">Delete Account</h2>
+                <p class="section-subtitle">Permanently remove your account and data.</p>
+
+                <div id="deleteFormContainer" class="danger-zone">
+                    <h5 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Warning</h5>
+                    <p class="small text-secondary mb-4">
+                        Deleting your account is irreversible. All your job postings, applications, and company data will be permanently removed from our database.
+                    </p>
+
+                    <form id="deleteAccountForm">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="mb-3">
+                            <label class="form-label text-danger">Confirm Password</label>
+                            <input type="password" class="form-control" id="deleteConfirmPassword" name="password" placeholder="Enter password to confirm" required>
+                            <div id="deleteConfirmPasswordError" class="text-danger small mt-1"></div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input border-danger" type="checkbox" id="confirmDeleteCheckbox" required>
+                            <label class="form-check-label small text-danger fw-bold" for="confirmDeleteCheckbox">
+                                I understand the consequences and want to delete my account.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger-custom" id="deleteAccountButton" disabled>
+                            Delete My Account
+                        </button>
+                    </form>
+                </div>
+
+                <div id="emailVerificationDeleteContainer" class="d-none mt-4">
+                    <div class="alert alert-warning border-warning d-flex align-items-center" role="alert">
+                        <i class="fas fa-envelope me-2"></i>
+                        <div>A final confirmation code has been sent to <strong id="deleteAccountEmailDisplay">your email</strong>.</div>
+                    </div>
+
+                    <form id="emailVerificationDeleteForm" class="text-center">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <div class="mb-3">
+                            <input type="text" class="form-control verification-code-input border-danger text-danger" id="deleteAccountVerificationCode" name="code" placeholder="000000" maxlength="6" pattern="\d{6}" required>
+                            <div id="deleteVerificationCodeError" class="text-danger small mt-1"></div>
+                        </div>
+                        <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold" id="verifyDeleteButton">
+                            Confirm Deletion
+                        </button>
+                    </form>
+                    <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted" id="deleteResendCodeButton" disabled>Resend Code</button>
+                        <span id="deleteCountdownTimer" class="badge bg-light text-dark border rounded-pill" style="display: none;"></span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<div id="fullPageLoadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function () {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        // Navigation Logic
+        const navLinks = document.querySelectorAll('.settings-sidebar .nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        const emailVerificationForm = document.getElementById('emailVerificationForm');
+        const passwordChangeContainer = document.getElementById('passwordChangeFormContainer');
+        const emailVerificationContainer = document.getElementById('emailVerificationContainer');
+        const deleteAccountForm = document.getElementById('deleteAccountForm');
+        const deleteFormContainer = document.getElementById('deleteFormContainer');
+        const emailVerificationDeleteContainer = document.getElementById('emailVerificationDeleteContainer');
+        const emailVerificationDeleteForm = document.getElementById('emailVerificationDeleteForm');
+        let countdownInterval;
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('data-section');
+
+                // Update UI
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                contentSections.forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+
+                // Smooth scroll on mobile
+                if(window.innerWidth < 992) {
+                    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+
+        // Helpers
+        function showFullPageLoading() {
+            document.getElementById('fullPageLoadingOverlay').classList.add('show');
+        }
+        function hideFullPageLoading() {
+            document.getElementById('fullPageLoadingOverlay').classList.remove('show');
+        }
+
+        function switchToVerificationView(email, expiryTime) {
+            passwordChangeContainer.classList.add('d-none');
+            emailVerificationContainer.classList.remove('d-none');
+            document.getElementById('userEmailForVerification').textContent = email;
+            startCountdown(expiryTime);
+        }
+
+        function switchToDeleteVerificationView(email, expiryTime) {
+            deleteFormContainer.classList.add('d-none');
+            emailVerificationDeleteContainer.classList.remove('d-none');
+            document.getElementById('deleteAccountEmailDisplay').textContent = email;
+            startCountdown(expiryTime, 'deleteCountdownTimer', 'deleteResendCodeButton', switchToDeletePasswordView, 'Deletion code expired. Please try again.');
+        }
+
+        function switchToDeletePasswordView() {
+            deleteFormContainer.classList.remove('d-none');
+            emailVerificationDeleteContainer.classList.add('d-none');
+            localStorage.removeItem('deleteVerificationExpiry');
+            localStorage.removeItem('deleteVerificationEmail');
+        }
+
+        function switchToPasswordChangeView() {
+            passwordChangeContainer.classList.remove('d-none');
+            emailVerificationContainer.classList.add('d-none');
+            localStorage.removeItem('passwordChangeExpiry');
+            localStorage.removeItem('passwordChangeEmail');
+            if (countdownInterval) clearInterval(countdownInterval);
+        }
+
+        function startCountdown(endTime, timerId, resendBtnId, onExpiryCallback, expiryMessage) {
+            let intervalKey = timerId + 'Interval';
+            if (window[intervalKey]) clearInterval(window[intervalKey]);
+
+            const timerEl = document.getElementById(timerId);
+            const resendBtn = document.getElementById(resendBtnId);
+
+            function updateTimer() {
+                const now = Date.now();
+                const remaining = Math.round((endTime - now) / 1000);
+
+                if (remaining <= 0) {
+                    clearInterval(window[intervalKey]);
+                    if(timerEl) timerEl.style.display = 'none';
+                    if(resendBtn) resendBtn.disabled = false;
+                    showToast(expiryMessage, 'warning');
+                    onExpiryCallback();
+                } else {
+                    if(timerEl) {
+                        timerEl.textContent = `Resend in ${remaining}s`;
+                        timerEl.style.display = 'inline-block';
+                    }
+                    if(resendBtn) resendBtn.disabled = true;
+                }
+            }
+
+            updateTimer();
+            window[intervalKey] = setInterval(updateTimer, 1000);
+        }
+
+        function initializeState() {
+            // Password Change State
+            const expiryTime = localStorage.getItem('passwordChangeExpiry');
+            const email = localStorage.getItem('passwordChangeEmail');
+
+            if (expiryTime && email && Date.now() < parseInt(expiryTime)) {
+                switchToVerificationView(email, parseInt(expiryTime));
+                startCountdown(parseInt(expiryTime), 'countdownTimer', 'resendCodeButton', switchToPasswordChangeView, 'Verification code expired. Please request a new one.');
+            } else {
+                switchToPasswordChangeView();
+            }
+
+            // Account Deletion State
+            const deleteExpiryTime = localStorage.getItem('deleteVerificationExpiry');
+            const deleteEmail = localStorage.getItem('deleteVerificationEmail');
+            if (deleteExpiryTime && deleteEmail && Date.now() < parseInt(deleteExpiryTime)) {
+                document.querySelector('.nav-link[data-section="deleteAccountSection"]').click();
+                switchToDeleteVerificationView(deleteEmail, parseInt(deleteExpiryTime));
+            } else {
+                switchToDeletePasswordView();
+            }
+        }
+
+        // Delete Account Logic
+        const deleteCheckbox = document.getElementById('confirmDeleteCheckbox');
+        const deleteButton = document.getElementById('deleteAccountButton');
+        if (deleteCheckbox) {
+            deleteCheckbox.addEventListener('change', function() {
+                deleteButton.disabled = !this.checked;
+                deleteButton.style.opacity = this.checked ? '1' : '0.5';
+                document.getElementById('deleteConfirmPasswordError').textContent = '';
+            });
+        }
+
+        // Toast Function (Custom style included in CSS)
+        // The showToast function is globally available from Toast.js
+
+        // ---- NOTIFICATION SETTINGS ----
+        const emailNotificationCheckbox = document.getElementById('emailJobApplications');
+        if (emailNotificationCheckbox) {
+            emailNotificationCheckbox.addEventListener('change', async function() {
+                const enabled = this.checked;
+                showFullPageLoading();
+                try {
+                    const response = await fetch('/company/notification-settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [csrfHeader]: csrfToken
+                        },
+                        body: JSON.stringify({ emailNewApplicant: enabled })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        showToast('Settings updated successfully', 'success');
+                    } else {
+                        this.checked = !enabled; // Revert
+                        showToast('Failed to update settings', 'error');
+                    }
+                } catch (error) {
+                    this.checked = !enabled;
+                    showToast('Network error', 'error');
+                } finally {
+                    hideFullPageLoading();
+                }
+            });
+        }
+
+        // ---- CHANGE PASSWORD LOGIC ----
+        const clearPasswordErrors = () => {
+            const el1 = document.getElementById('currentPasswordError');
+            if (el1) el1.textContent = '';
+
+            const el2 = document.getElementById('newPasswordError');
+            if (el2) el2.textContent = '';
+
+            const el3 = document.getElementById('confirmNewPasswordError');
+            if (el3) el3.textContent = '';
+
+            const el4 = document.getElementById('verificationCodeError');
+            if (el4) el4.textContent = ''; // Chỉ xóa nếu thẻ này tồn tại
+        };
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                clearPasswordErrors();
+                showFullPageLoading();
+
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/company/account/password-changing/request', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const expiryTime = Date.now() + 60 * 1000; // 60 seconds from now
+                        localStorage.setItem('passwordChangeExpiry', expiryTime);
+                        localStorage.setItem('passwordChangeEmail', result.data.email);
+                        switchToVerificationView(result.email, expiryTime);
+                        showToast('Verification code sent!', 'success');
+                    } else {
+                        if (result.details) { // Using 'details' from ApiResponse
+                            const errors = result.details;
+                            if(errors.currentPassword) document.getElementById('currentPasswordError').textContent = errors.currentPassword;
+                            if(errors.newPassword) document.getElementById('newPasswordError').textContent = errors.newPassword;
+                            if(errors.isPasswordMatching) document.getElementById('confirmedNewPasswordError').textContent = errors.isPasswordMatching;
+                            if(errors.confirmedNewPassword) document.getElementById('confirmedNewPasswordError').textContent = errors.confirmedNewPassword;
+                        } else {
+                            showToast(result.message || 'An error occurred', 'error');
+                        }
+                    }
+                } catch (error) {
+                    showToast('Network error', 'error');
+                } finally {
+                    hideFullPageLoading();
+                }
+            });
+        }
+
+        if (emailVerificationForm) {
+            emailVerificationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                document.getElementById('verificationCodeError').textContent = '';
+                showFullPageLoading();
+
+                const code = document.getElementById('verificationCode').value;
+                // The new password is now stored in the session on the backend, not needed from frontend.
+                try {
+                    const response = await fetch('/company/account/password-changing/final', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                        body: JSON.stringify({ emailVerificationCode: code })
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showToast('Password updated successfully!', 'success');
+                        switchToPasswordChangeView();
+                        changePasswordForm.reset();
+                    } else {
+                        if(result.details && result.details.verificationCode) {
+                            document.getElementById('verificationCodeError').textContent = result.details.verificationCode;
+                        } else {
+                            showToast('Verification failed', 'error');
+                        }
+                    }
+                } catch(err) {
+                    showToast('Network error', 'error');
+                } finally {
+                    hideFullPageLoading();
+                }
+            });
+        }
+
+        // ---- RESEND CODE ----
+        const resendBtn = document.getElementById('resendCodeButton');
+        if(resendBtn) {
+            resendBtn.addEventListener('click', async () => {
+                showFullPageLoading();
+                try {
+                    const res = await fetch('/company/account/send-email-code', { method: 'GET', headers: {[csrfHeader]: csrfToken} });
+                    const data = await res.json();
+                    if(res.ok && data.success) {
+                        const newExpiryTime = Date.now() + 60 * 1000;
+                        localStorage.setItem('passwordChangeExpiry', newExpiryTime);
+                        startCountdown(newExpiryTime, 'countdownTimer', 'resendCodeButton', switchToPasswordChangeView, 'Verification code expired. Please request a new one.');
+                        showToast('New code sent', 'success');
+                    } else {
+                        showToast(data.message || 'Failed to resend', 'error');
+                    }
+                } catch(e) { showToast('Network error', 'error'); }
+                finally { hideFullPageLoading(); }
+            });
+        }
+
+        // Initialize the view based on localStorage on page load
+        initializeState();
+
+        // ---- DELETE ACCOUNT LOGIC ----
+        if (deleteAccountForm) {
+            deleteAccountForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                document.getElementById('deleteConfirmPasswordError').textContent = '';
+                showFullPageLoading();
+
+                const password = document.getElementById('deleteConfirmPassword').value;
+
+                try {
+                    const response = await fetch('/company/account/deletion/verify-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                        body: JSON.stringify({ password: password })
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const userEmail = result.data.email;
+                        const expiryTime = Date.now() + 60 * 1000;
+                        localStorage.setItem('deleteVerificationExpiry', expiryTime);
+                        localStorage.setItem('deleteVerificationEmail', userEmail);
+
+                        showToast('Password verified. Check your email for a code.', 'success');
+                        switchToDeleteVerificationView(userEmail, expiryTime);
+
+                    } else {
+                        if (result.details && result.details.password) {
+                            document.getElementById('deleteConfirmPasswordError').textContent = result.details.password;
+                        } else {
+                            showToast(result.message || 'Incorrect password.', 'error');
+                        }
+                    }
+                } catch (error) {
+                    showToast('An error occurred. Please try again.', 'error');
+                } finally {
+                    hideFullPageLoading();
+                }
+            });
+        }
+
+        if (emailVerificationDeleteForm) {
+            emailVerificationDeleteForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                document.getElementById('deleteVerificationCodeError').textContent = '';
+                showFullPageLoading();
+
+                const verificationCode = document.getElementById('deleteAccountVerificationCode').value;
+
+                try {
+                    const response = await fetch('/company/account/deletion/finalize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                        body: JSON.stringify({ verificationCode: verificationCode })
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showToast('Account deleted successfully. Redirecting...', 'success');
+                        localStorage.removeItem('deleteVerificationExpiry');
+                        localStorage.removeItem('deleteVerificationEmail');
+                        setTimeout(() => {
+                            window.location.href = result.data.redirectUrl || '/main/home';
+                        }, 2000);
+                    } else {
+                        if (result.details && result.details.verificationCode) {
+                            document.getElementById('deleteVerificationCodeError').textContent = result.details.verificationCode;
+                        } else {
+                            showToast(result.message || 'Invalid verification code.', 'error');
+                        }
+                        hideFullPageLoading();
+                    }
+                } catch (error) {
+                    showToast('An error occurred. Please try again.', 'error');
+                    hideFullPageLoading();
+                }
+            });
+        }
+
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

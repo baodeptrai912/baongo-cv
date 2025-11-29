@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Candidate Application - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Tươi Sáng - Tin vui */
+        .header {
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            color: white;
+            padding: 45px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #ea580c; font-weight: 700; }
+
+        /* Candidate Card Profile Style */
+        .candidate-card {
+            background-color: #fff;
+            border: 1px solid #fed7aa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        /* Tag "New" ở góc */
+        .candidate-card::after {
+            content: "NEW";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Style cho Avatar (Ảnh thật) */
+        .avatar-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 20px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Style cho Avatar Placeholder (Chữ cái đầu) */
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            background-color: #ffedd5;
+            color: #c2410c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-right: 20px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .candidate-info h3 {
+            font-size: 18px;
+            color: #1f2937;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .candidate-info p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .applied-for {
+            margin-top: 5px;
+            font-size: 13px;
+            color: #9a3412;
+            font-weight: 500;
+            background: #fff7ed;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.2);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .candidate-card { flex-direction: column; text-align: center; }
+            .avatar-placeholder, .avatar-img { margin-right: 0; margin-bottom: 15px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>📄 New Applicant!</h1>
+        <p>Someone is interested in your team</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${employerName}">ABC Company</span>,
+        </div>
+
+        <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+            Great news! You have received a new application. Here is a snapshot of the candidate:
+        </p>
+
+        <!-- Candidate Profile Card -->
+        <div class="candidate-card">
+
+            <!-- LOGIC HIỂN THỊ AVATAR -->
+            <!-- Trường hợp 1: Có ảnh Avatar thật -> Hiển thị ảnh -->
+            <img th:if="${applicantAvatarUrl != null}"
+                 th:src="${applicantAvatarUrl}"
+                 alt="Candidate Avatar"
+                 class="avatar-img" />
+
+            <!-- Trường hợp 2: Không có ảnh -> Hiển thị Placeholder (Chữ cái đầu) -->
+            <div th:if="${applicantAvatarUrl == null}" class="avatar-placeholder">
+                <span th:text="${#strings.substring(applicantName,0,1)}">J</span>
+            </div>
+
+            <div class="candidate-info">
+                <h3 th:text="${applicantName}">John Doe</h3>
+                <p>Applied just now</p>
+                <span class="applied-for">For: <strong th:text="${jobTitle}">Software Engineer</strong></span>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <a th:href="${applicationViewUrl}" class="cta-button">
+            🚀 Review Application
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Review quickly to secure top talent before they're gone!</p>
+            <p style="margin-top: 10px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Dashboard</a> |
+            <a href="#">Manage Jobs</a> |
+            <a href="#">Support</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${response?.jobPosting?.title + ' - Job Detail | BaoNgoCv' ?: 'Job Detail | BaoNgoCv'}">Job Detail | BaoNgoCv</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --primary-dark: #e85d2a;
+            --primary-light: #fff0eb;
+            --secondary: #1e293b;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, .btn, .badge {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .main-container {
+            padding: 3rem 0;
+        }
+
+        /* ===== JOB HERO CARD ===== */
+        .job-detail-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .job-header-banner {
+            height: 140px;
+            background: linear-gradient(120deg, #fff0eb 0%, #ffdcd1 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-header-banner::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%);
+            top: -50%;
+            right: -10%;
+            border-radius: 50%;
+        }
+
+        .job-header-content {
+            padding: 0 2.5rem 2rem;
+            margin-top: -50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+
+        .company-logo-wrapper {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .company-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .job-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .company-name-link {
+            font-size: 1.1rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .company-name-link:hover { text-decoration: underline; }
+
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            /* ✨ [FIX] Align buttons vertically to the center */
+            align-items: center;
+        }
+
+        .btn-save {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-save.saved {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-apply-header {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-apply-header:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        /* ===== META TAGS & GRID ===== */
+        .job-tags {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .meta-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pill-salary { background: #ecfdf5; color: #059669; }
+        .pill-location { background: #eff6ff; color: #2563eb; }
+        .pill-type { background: #f5f3ff; color: #7c3aed; }
+        .pill-exp { background: #fff7ed; color: #ea580c; }
+
+        .job-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-wrapper {
+            padding: 0 2.5rem 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i { color: var(--primary); }
+
+        .description-text {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            white-space: pre-line; /* Preserves line breaks if any */
+        }
+
+        .custom-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2.5rem;
+        }
+
+        .custom-list li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 0.75rem;
+            color: #334155;
+        }
+
+        .custom-list li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 4px;
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar-sticky {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .similar-job-item {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .similar-job-item:last-child { border-bottom: none; }
+        .similar-job-item:hover { background-color: #f8fafc; transform: translateX(4px); }
+
+        .similar-job-img {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            object-fit: contain;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 2px;
+        }
+
+        .similar-job-info h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0 0 0.25rem;
+            line-height: 1.3;
+        }
+
+        .similar-job-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Application Status Box in Sidebar */
+        .app-status-box {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .status-applied { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .status-closed { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 5rem 1rem;
+        }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 1.5rem; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-top-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .company-logo-wrapper { margin-bottom: 0.5rem; }
+            .action-buttons { width: 100%; }
+            .btn-apply-header { flex: 1; text-align: center; }
+            .job-stats-grid { grid-template-columns: 1fr 1fr; }
+            .content-wrapper { padding: 0 1.5rem 2rem; }
+            .job-header-content { padding: 0 1.5rem 1.5rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main class="main-container container">
+    <div th:if="${response == null || response.jobPosting == null}" class="empty-state">
+        <i class="fas fa-search"></i>
+        <h2 class="fw-bold">Job Not Found</h2>
+        <p class="text-muted mb-4">The job posting you are looking for might have been removed or is unavailable.</p>
+        <a th:href="@{/main/home}" class="btn btn-primary rounded-pill px-4">Back to Home</a>
+    </div>
+
+    <div class="row g-4" th:if="${response != null and response.jobPosting != null}">
+        <div class="col-lg-8">
+            <article class="job-detail-card">
+                <div class="job-header-banner"></div>
+
+                <div class="job-header-content">
+                    <div class="header-top-row">
+                        <div class="company-logo-wrapper">
+                            <img class="company-logo"
+                                 th:src="${response.company.companyLogo ?: '/img/default-logo.png'}"
+                                 th:alt="${response.company.name}">
+                        </div>
+
+                        <div class="action-buttons" th:if="${response.applicationStatus.userCheck}">
+                            <div th:id="'job-buttons-' + ${response.jobPosting.id}">
+                                <!-- [FIX] Add role-based logic for save/unsave buttons -->
+                                <div sec:authorize="hasRole('COMPANY')">
+                                    <button onclick="showToast('This feature is not available for company accounts.', 'warning')"
+                                            class="btn-save" title="Save Job">
+                                        <i class="far fa-bookmark"></i>
+                                    </button>
+                                </div>
+
+                                <div sec:authorize="!hasRole('COMPANY')">
+                                    <button th:if="${!response.applicationStatus.savedJob}"
+                                            th:onclick="'handleSaveJobClick(event, ' + ${response.jobPosting.id} + ')'"
+                                            class="btn-save" title="Save Job">
+                                        <i class="far fa-bookmark"></i>
+                                    </button>
+                                    <button th:if="${response.applicationStatus.savedJob}"
+                                            th:onclick="'unsaveJob(' + ${response.jobPosting.id} + ')'"
+                                            class="btn-save saved" title="Unsave Job">
+                                        <i class="fas fa-bookmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- [FIX] Add role-based logic for Apply Now button -->
+                            <div th:if="${!response.applicationStatus.applied and response.jobPosting.open and !response.applicationStatus.deleted}">
+                                <!-- For Company Accounts -->
+                                <a sec:authorize="hasRole('COMPANY')"
+                                   href="#"
+                                   onclick="event.preventDefault(); showToast('This feature is not available for company accounts.', 'warning');"
+                                   class="btn-apply-header">
+                                    Apply Now
+                                </a>
+
+                                <!-- For Job Seekers or Anonymous Users -->
+                                <a sec:authorize="!hasRole('COMPANY')"
+                                   th:href="@{/jobseeker/apply-job/{id}(id=${response.jobPosting.id})}"
+                                   class="btn-apply-header"
+                                   th:onclick="${!#authorization.expression('isAuthenticated()')} ? 'showLoginNotification(event)' : null">
+                                    Apply Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h1 class="job-title" th:text="${response.jobPosting.title}">Senior Software Engineer</h1>
+
+                    <div class="mb-3">
+                        <a th:href="@{/jobseeker/company-detail/{id}(id=${response.company.id})}" class="company-name-link">
+                            <span th:text="${response.company.name}">Company Name</span>
+                            <i class="fas fa-check-circle small text-primary ms-1" title="Verified"></i>
+                        </a>
+                    </div>
+
+                    <div class="job-tags">
+                         <span class="meta-pill pill-salary" th:if="${response.jobPosting.salaryRangeDisplay}">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span th:text="${response.jobPosting.salaryRangeDisplay}">$1000 - $2000</span>
+                        </span>
+                        <span class="meta-pill pill-location" th:if="${response.jobPosting.locationDisplay}">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span th:text="${response.jobPosting.locationDisplay}">New York</span>
+                        </span>
+                        <span class="meta-pill pill-type" th:if="${response.jobPosting.jobTypeDisplay}">
+                            <i class="fas fa-clock"></i>
+                            <span th:text="${response.jobPosting.jobTypeDisplay}">Full-time</span>
+                        </span>
+                        <span class="meta-pill pill-exp" th:if="${response.jobPosting.experienceDisplay}">
+                            <i class="fas fa-briefcase"></i>
+                            <span th:text="${response.jobPosting.experienceDisplay}">3 Years</span>
+                        </span>
+                    </div>
+
+                    <div class="job-stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Posted</span>
+                            <span class="stat-value" th:text="${response.jobPosting.formattedPostedDate}">2 days ago</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Deadline</span>
+                            <span class="stat-value text-danger" th:text="${response.jobPosting.applicationDeadlineFormatted}">Dec 31</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Applicants</span>
+                            <span class="stat-value">
+                                <span th:text="${response.jobMetric.applicantCount ?: 0}">0</span> people
+                            </span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Industry</span>
+                            <span class="stat-value" th:text="${response.jobPosting.industryDisplay}">Tech</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-wrapper">
+                    <div class="mb-5">
+                        <h3 class="section-title"><i class="far fa-file-alt"></i> Job Description</h3>
+                        <div th:if="${response.jobPosting.descriptions != null and !#lists.isEmpty(response.jobPosting.descriptions)}">
+                            <ul class="custom-list">
+                                <li th:each="desc : ${response.jobPosting.descriptions}" th:text="${desc}"></li>
+                            </ul>
+                        </div>
+                        <div th:if="${response.jobPosting.descriptions == null or #lists.isEmpty(response.jobPosting.descriptions)}" class="text-muted fst-italic">
+                            No description provided.
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <h3 class="section-title"><i class="far fa-check-square"></i> Requirements</h3>
+                        <div th:if="${response.jobPosting.requirements != null and !#lists.isEmpty(response.jobPosting.requirements)}">
+                            <ul class="custom-list">
+                                <li th:each="req : ${response.jobPosting.requirements}" th:text="${req}"></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="section-title"><i class="far fa-star"></i> Benefits</h3>
+                        <div th:if="${response.jobPosting.benefits != null and !#lists.isEmpty(response.jobPosting.benefits)}">
+                            <ul class="custom-list">
+                                <li th:each="benefit : ${response.jobPosting.benefits}" th:text="${benefit}"></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </article>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sidebar-sticky">
+
+                <div class="sidebar-card text-center" th:if="${response.applicationStatus.applied or !response.jobPosting.open}">
+                    <div th:if="${response.applicationStatus.applied}" class="app-status-box status-applied">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <h5 class="fw-bold mb-1">Applied</h5>
+                        <p class="small mb-2">You applied for this job.</p>
+                        <a th:if="${response.applicationStatus.applicantMatching != null}"
+                           th:href="@{/jobseeker/my-application(highlight=${response.applicationStatus.applicantMatching.id})}"
+                           class="text-decoration-none fw-bold text-success small">View Application</a>
+                    </div>
+
+                    <div th:if="${!response.jobPosting.open}" class="app-status-box status-closed mt-2">
+                        <i class="fas fa-lock mb-1"></i> Job Closed
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Similar Jobs</h3>
+                    <div th:if="${response?.jobPostingRelevant != null and !#lists.isEmpty(response.jobPostingRelevant)}">
+                        <a th:each="job : ${response.jobPostingRelevant}"
+                           th:href="@{/jobseeker/job-detail/{id}(id=${job.id})}"
+                           class="similar-job-item">
+                            <img class="similar-job-img"
+                                 th:src="${job.companyLogo ?: '/img/default-logo.png'}"
+                                 alt="Logo">
+                            <div class="similar-job-info">
+                                <h4 th:text="${job.title}">Job Title</h4>
+                                <div class="similar-job-meta">
+                                    <span th:text="${job.companyName}">Company</span> •
+                                    <span th:text="${job.location}">Location</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div th:if="${#lists.isEmpty(response.jobPostingRelevant)}" class="text-muted small text-center py-3">
+                        No similar jobs found.
+                    </div>
+                </div>
+
+                <div class="sidebar-card bg-white">
+                    <h3 class="sidebar-title">Safe Job Hunting</h3>
+                    <ul class="list-unstyled small text-muted m-0">
+                        <li class="mb-2"><i class="fas fa-shield-alt text-primary me-2"></i>Never provide bank details.</li>
+                        <li class="mb-2"><i class="fas fa-user-shield text-primary me-2"></i>Research the company.</li>
+                        <li><i class="fas fa-exclamation-triangle text-primary me-2"></i>Report suspicious jobs.</li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Share this job</h3>
+                    <!-- [FIX] Implement Share Buttons -->
+                    <div class="d-flex gap-2 justify-content-center" id="share-buttons-container">
+                        <a href="#" id="share-facebook" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 36px; height: 36px;" title="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" id="share-linkedin" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 36px; height: 36px;" title="Share on LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" id="share-twitter" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 36px; height: 36px;" title="Share on Twitter/X"><i class="fab fa-twitter"></i></a>
+                        <button id="copy-link" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 36px; height: 36px;" title="Copy link"><i class="fas fa-link"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    const csrfToken = /*[[${_csrf.token}]]*/ null;
+    const csrfHeaderName = /*[[${_csrf.headerName}]]*/ null;
+
+    function createHeaders() {
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        if (csrfHeaderName && csrfToken) headers.append(csrfHeaderName, csrfToken);
+        return headers;
+    }
+
+    function handleSaveJobClick(event, jobId) {
+        const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+        if (!isAuthenticated) {
+            event.preventDefault();
+            showToast('Please login to save this job', 'warning');
+        } else {
+            saveJob(jobId);
+        }
+    }
+
+    function showLoginNotification(event) {
+        event.preventDefault();
+        const targetUrl = event.currentTarget.href;
+        showToast('Redirecting to login...', 'info');
+        setTimeout(() => { window.location.href = targetUrl; }, 1000);
+    }
+
+    function updateSaveButton(jobId, isSaved) {
+        const container = document.getElementById(`job-buttons-${jobId}`);
+        if (!container) return;
+
+        if (isSaved) {
+            container.innerHTML = `<button onclick="unsaveJob(${jobId})" class="btn-save saved" title="Unsave Job"><i class="fas fa-bookmark"></i></button>`;
+        } else {
+            container.innerHTML = `<button onclick="handleSaveJobClick(event, ${jobId})" class="btn-save" title="Save Job"><i class="far fa-bookmark"></i></button>`;
+        }
+    }
+
+    async function saveJob(jobId) {
+        try {
+            const response = await fetch(`/jobseeker/save-job/${jobId}`, {
+                method: 'POST',
+                headers: createHeaders()
+            });
+            if (response.ok) {
+                updateSaveButton(jobId, true);
+            } else {
+                console.error('Failed to save job');
+            }
+        } catch (e) {
+            console.error('Network error during save job:', e);
+        }
+    }
+
+    async function unsaveJob(jobId) {
+        try {
+            const response = await fetch(`/jobseeker/unsave-job/${jobId}`, {
+                method: 'POST',
+                headers: createHeaders()
+            });
+            if (response.ok) {
+                updateSaveButton(jobId, false);
+            } else {
+                console.error('Failed to unsave job');
+            }
+        } catch (e) {
+            console.error('Network error during unsave job:', e);
+        }
+    }
+
+    // ==================================================
+    // ✨ [NEW] SHARE JOB LOGIC ✨
+    // ==================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const shareContainer = document.getElementById('share-buttons-container');
+        if (!shareContainer) return;
+
+        const jobTitle = /*[[${response?.jobPosting?.title}]]*/ 'Check out this job';
+        const pageUrl = window.location.href;
+
+        const facebookBtn = document.getElementById('share-facebook');
+        const linkedinBtn = document.getElementById('share-linkedin');
+        const twitterBtn = document.getElementById('share-twitter');
+        const copyBtn = document.getElementById('copy-link');
+
+        const shareWindow = (url) => {
+            window.open(url, '_blank', 'width=600,height=400');
+        };
+
+        facebookBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`);
+        });
+
+        linkedinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareWindow(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`);
+        });
+
+        twitterBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const text = `Check out this job: ${jobTitle}`;
+            shareWindow(`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`);
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(pageUrl).then(() => {
+                showToast('Link copied to clipboard!', 'success');
+            }).catch(err => {
+                showToast('Failed to copy link.', 'error');
+                console.error('Could not copy text: ', err);
+            });
+        });
+    });
+</script>
+</body>
+</html>

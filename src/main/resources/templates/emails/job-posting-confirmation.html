@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Posting Confirmation - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Cam Tươi - Chúc mừng */
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #fb923c 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-icon { font-size: 32px; margin-right: 10px; }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #ea580c; font-weight: 700; }
+
+        /* Job Card - Thiết kế 3D nhẹ */
+        .job-card {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #22c55e; /* Viền xanh lá báo hiệu LIVE */
+            position: relative;
+        }
+
+        .job-title {
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .job-meta {
+            font-size: 14px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-badge {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-badge::before {
+            content: "●";
+            color: #15803d;
+            margin-right: 4px;
+            font-size: 10px;
+        }
+
+        /* Tips Box */
+        .tips-box {
+            background-color: #eff6ff; /* Xanh dương rất nhạt */
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #1e40af;
+            font-size: 14px;
+        }
+
+        .tips-box strong { color: #1e3a8a; }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.2);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><span class="header-icon">🎉</span> Posting is Live!</h1>
+        <p>Your job opportunity is now visible to the world</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${companyName}">Company Name</span>,
+        </div>
+
+        <p style="margin-bottom: 25px; font-size: 16px; line-height: 1.8; color: #374151;">
+            Great news! Your job posting has successfully passed our review process and is now live on BaoNgoCV. Candidates can view and apply immediately.
+        </p>
+
+        <!-- Job Card -->
+        <div class="job-card">
+            <span class="job-title" th:text="${jobTitle}">Senior Frontend Developer</span>
+            <div class="job-meta">
+                <span class="status-badge">Active & Live</span>
+                <span>📅 Posted: <strong th:text="${postedDate}">Nov 20, 2025</strong></span>
+            </div>
+        </div>
+
+        <!-- Pro Tip -->
+        <div class="tips-box">
+            <strong>💡 Pro Tip:</strong>
+            Sharing your job posting on social media (LinkedIn, Facebook) can increase applicant volume by up to 30%.
+        </div>
+
+        <!-- CTA Button -->
+        <a href="https://baongocv.com/company/job-posting-management" class="cta-button">
+            📊 View & Manage Posting
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>We wish you the best of luck in finding your next great hire!</p>
+            <p style="margin-top: 10px;">
+                The BaoNgoCV Team
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Dashboard</a> |
+            <a href="#">Post Another Job</a> |
+            <a href="#">Support</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Deleted - BaoNgoCv</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/Home.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+
+            margin: 0;
+            padding: 0;
+        }
+
+        .confirmation-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .confirmation-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+            margin: 1rem auto;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .confirmation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, orangered, #ff6b35);
+        }
+
+        .logo-section {
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        .brand-tagline {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .success-icon {
+            color: #28a745;
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: checkmark 0.8s ease-in-out;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        .confirmation-title {
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .confirmation-title::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background-color: orangered;
+            border-radius: 2px;
+        }
+
+        .confirmation-message {
+            color: #6c757d;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight-text {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .data-list {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid orangered;
+        }
+
+        .data-list h6 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .data-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .data-list li {
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        .data-list li:last-child {
+            border-bottom: none;
+        }
+
+        .data-list i {
+            color: #28a745;
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .thank-you-box {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .thank-you-box i {
+            color: orangered;
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .thank-you-box p {
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .action-buttons {
+            margin-top: 2rem;
+        }
+
+        .action-buttons .btn {
+            margin: 0.3rem;
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(45deg, orangered, #ff6b35);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+
+        .footer-info {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e9ecef;
+            color: #adb5bd;
+            font-size: 0.85rem;
+        }
+
+        .footer-info i {
+            color: orangered;
+            margin-right: 6px;
+        }
+
+        .footer-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tablet Responsive */
+        @media (max-width: 991.98px) {
+            .confirmation-section {
+                padding: 1rem;
+            }
+
+            .confirmation-card {
+                padding: 2rem 1.5rem;
+                margin: 0.5rem;
+            }
+
+            .confirmation-title {
+                font-size: 1.8rem;
+            }
+
+            .success-icon {
+                font-size: 3.5rem;
+            }
+
+            .logo {
+                max-width: 130px;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 767.98px) {
+            .confirmation-section {
+                padding: 0.5rem;
+                min-height: 100vh;
+                align-items: flex-start;
+                padding-top: 2rem;
+            }
+
+            .confirmation-card {
+                margin: 0;
+                padding: 1.5rem 1rem;
+                border-radius: 15px;
+                max-width: 100%;
+            }
+
+            .logo-section {
+                margin-bottom: 1rem;
+                margin-top: 0.5rem;
+            }
+
+            .logo {
+                max-width: 120px;
+            }
+
+            .brand-tagline {
+                font-size: 0.8rem;
+            }
+
+            .confirmation-title {
+                font-size: 1.5rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .confirmation-title::after {
+                width: 50px;
+                height: 2px;
+            }
+
+            .success-icon {
+                font-size: 3rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .confirmation-message {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+
+            .data-list {
+                padding: 0.8rem;
+                margin: 1rem 0;
+            }
+
+            .data-list h6 {
+                font-size: 0.9rem;
+            }
+
+            .data-list li {
+                font-size: 0.8rem;
+                padding: 0.3rem 0;
+            }
+
+            .thank-you-box {
+                padding: 0.8rem;
+                margin: 1rem 0;
+            }
+
+            .thank-you-box p {
+                font-size: 0.85rem;
+            }
+
+            .action-buttons {
+                margin-top: 1.5rem;
+            }
+
+            .action-buttons .btn {
+                display: block;
+                width: 100%;
+                margin: 0.5rem 0;
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .footer-info {
+                margin-top: 1.5rem;
+                padding-top: 1rem;
+                font-size: 0.75rem;
+            }
+
+            .footer-info p {
+                margin-bottom: 0.3rem;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 575.98px) {
+            .confirmation-section {
+                padding-top: 1rem;
+            }
+
+            .confirmation-card {
+                padding: 1rem 0.8rem;
+            }
+
+            .logo {
+                max-width: 100px;
+            }
+
+            .confirmation-title {
+                font-size: 1.3rem;
+            }
+
+            .success-icon {
+                font-size: 2.5rem;
+            }
+
+            .confirmation-message {
+                font-size: 0.85rem;
+            }
+
+            .data-list li {
+                font-size: 0.75rem;
+            }
+
+            .thank-you-box p {
+                font-size: 0.8rem;
+            }
+
+            .action-buttons .btn {
+                font-size: 0.85rem;
+                padding: 0.7rem 1rem;
+            }
+        }
+
+        /* Animation for the entire card */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Ensure proper viewport height on mobile */
+        @media (max-height: 600px) {
+            .confirmation-section {
+                align-items: flex-start;
+                padding-top: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<section class="confirmation-section">
+    <div class="confirmation-card">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <img src="/img/logo/logoShop.png" alt="BaoNgoCv Logo" class="logo">
+            <p class="brand-tagline">Your Career Journey Partner</p>
+        </div>
+
+        <!-- Success Icon -->
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="confirmation-title">Account Successfully Deleted</h1>
+
+        <!-- Main Message -->
+        <div class="confirmation-message">
+            <p class="highlight-text">Your company account has been permanently removed from our system.</p>
+            <p>All associated data has been securely deleted and cannot be recovered.</p>
+        </div>
+
+        <!-- Data Deletion Details -->
+        <div class="data-list">
+            <h6><i class="fas fa-shield-alt me-2"></i>Data Permanently Deleted:</h6>
+            <ul>
+                <li><i class="fas fa-check"></i>Company profile and settings</li>
+                <li><i class="fas fa-check"></i>Job postings and applications</li>
+                <li><i class="fas fa-check"></i>Applicant communications</li>
+                <li><i class="fas fa-check"></i>Login history and activity logs</li>
+                <li><i class="fas fa-check"></i>All personal and business data</li>
+            </ul>
+        </div>
+
+        <!-- Thank You Message -->
+        <div class="thank-you-box">
+            <p class="mb-0">
+                <i class="fas fa-heart"></i>
+                <strong>Thank you for using BaoNgoCv.</strong>
+                We're sorry to see you go and hope our platform served you well during your time with us.
+            </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="/main/home" class="btn btn-primary-custom">
+                <i class="fas fa-home me-2"></i>Return to Homepage
+            </a>
+        </div>
+
+        <!-- Footer Information -->
+        <div class="footer-info">
+            <p class="mb-2">
+                <i class="fas fa-question-circle"></i>
+                Have questions or need assistance? Our support team is here to help.
+            </p>
+            <p class="mb-0">
+                <i class="fas fa-envelope"></i> support@baongocv.com |
+                <i class="fas fa-phone"></i> +84 123 456 789
+            </p>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Clear any remaining session data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Prevent back button to account pages
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+
+        // Optional: Auto-redirect after 60 seconds
+        setTimeout(() => {
+            if (confirm('Would you like to return to the homepage?')) {
+                window.location.href = '/main/home';
+            }
+        }, 60000);
+
+        // Add some interactive effects
+        const buttons = document.querySelectorAll('.btn');
+
+        // Add hover effects to buttons
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                if (window.innerWidth > 768) {
+                    this.style.transform = 'translateY(-2px)';
+                }
+            });
+
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Adjust layout for very small screens
+        function adjustForSmallScreens() {
+            const card = document.querySelector('.confirmation-card');
+            const section = document.querySelector('.confirmation-section');
+
+            if (window.innerHeight < 600 || window.innerWidth < 400) {
+                section.style.alignItems = 'flex-start';
+                section.style.paddingTop = '1rem';
+            }
+        }
+
+        // Run on load and resize
+        adjustForSmallScreens();
+        window.addEventListener('resize', adjustForSmallScreens);
+    });
+</script>
+</body>
+</html>

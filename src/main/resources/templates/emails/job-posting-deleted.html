@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Posting Removed - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Trầm - Thông báo nhẹ nhàng */
+        .header {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            color: white;
+            padding: 45px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #ea580c; font-weight: 700; }
+
+        /* Job Card Removed */
+        .job-card {
+            background-color: #f9fafb; /* Nền xám báo hiệu đã đóng */
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 30px 0;
+            position: relative;
+            opacity: 0.8; /* Làm mờ nhẹ */
+        }
+
+        .job-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .job-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #374151; /* Màu chữ xám đậm */
+            text-decoration: line-through; /* Gạch ngang tên job */
+            text-decoration-color: #9ca3af;
+        }
+
+        .company-name {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        /* Message Box */
+        .message-text {
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        /* Recommendation Box */
+        .recommendation-box {
+            background-color: #fff7ed; /* Cam nhạt */
+            border-left: 4px solid #f97316;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .recommendation-title {
+            font-weight: 700;
+            color: #9a3412;
+            font-size: 15px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .recommendation-text {
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.2);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ff6b35, #f59e0b);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>🚫 Job Posting Closed</h1>
+        <p>Update on your application status</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${applicantName}">Applicant</span>,
+        </div>
+
+        <p class="message-text">
+            We're writing to let you know that the following job posting has been removed by the company and is <strong>no longer accepting applications</strong>.
+        </p>
+
+        <!-- Job Card (Removed Style) -->
+        <div class="job-card">
+            <div class="job-card-header">
+                <div>
+                    <span class="job-title" th:text="${jobTitle}">Software Engineer</span>
+                    <div class="company-name" th:text="${companyName}">Tech Solutions Inc.</div>
+                </div>
+                <span class="status-badge">Removed</span>
+            </div>
+        </div>
+
+        <!-- Encouragement / Recommendation -->
+        <div class="recommendation-box">
+            <span class="recommendation-title">💡 Don't give up!</span>
+            <span class="recommendation-text">
+                This role may be closed, but new opportunities are posted daily. Based on your profile, there are likely other companies looking for someone with your skills.
+            </span>
+        </div>
+
+        <!-- CTA Button -->
+        <a href="https://baongocv.com/jobseeker/job-list" class="cta-button">
+            🔍 Find Similar Jobs
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>We appreciate your effort and wish you success in your search.</p>
+            <p style="margin-top: 10px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">My Applications</a> |
+            <a href="#">Job Alerts</a> |
+            <a href="#">Support</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

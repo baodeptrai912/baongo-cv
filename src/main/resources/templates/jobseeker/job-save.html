@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaoNgoCv - Saved Jobs</title>
+
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/Home.css" rel="stylesheet">
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/confirmModal.js.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        :root {
+            /* Modern Color Palette */
+            --primary-color: #FF6B35;
+            --primary-soft: #FFF0EB;
+            --primary-hover: #E85D2B;
+            --secondary-text: #64748B;
+            --heading-text: #1E293B;
+            --card-bg: #FFFFFF;
+            --page-bg: #F8FAFC;
+            --border-color: #E2E8F0;
+
+            /* Status Colors */
+            --success-bg: #DCFCE7;
+            --success-text: #166534;
+            --warning-bg: #FEF3C7;
+            --warning-text: #92400E;
+            --danger-bg: #FEE2E2;
+            --danger-text: #991B1B;
+
+            /* Effects */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+            --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--page-bg);
+            background-image:
+                    radial-gradient(at 0% 0%, rgba(255, 107, 53, 0.05) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(255, 107, 53, 0.05) 0px, transparent 50%);
+            color: var(--heading-text);
+            min-height: 100vh;
+        }
+
+        /* HEADER SECTION RE-DESIGN */
+        .job-save-header {
+            padding: 4rem 0 3rem 0;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .page-heading {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--heading-text);
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-heading i {
+            color: var(--primary-color);
+            transform: rotate(-10deg);
+            display: inline-block;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--secondary-text);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* STATS CARDS - CLEANER LOOK */
+        .stats-summary {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stats-item {
+            text-align: center;
+            padding: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .stats-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .stats-label {
+            color: var(--secondary-text);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* JOB CARD - MODERNIZED */
+        .job-listing-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .job-listing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255, 107, 53, 0.3);
+        }
+
+        .card-body {
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        /* Company Info */
+        .company-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .company-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            padding: 2px;
+            background: white;
+        }
+
+        .company-info h5 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--heading-text);
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .company-name {
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+            font-weight: 500;
+        }
+
+        /* Badges & Tags */
+        .status-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .status-badge.active { background: var(--success-bg); color: var(--success-text); }
+        .status-badge.expired { background: var(--danger-bg); color: var(--danger-text); }
+        .status-badge.applied { background: var(--primary-soft); color: var(--primary-color); }
+        .status-badge.pending { background: var(--warning-bg); color: var(--warning-text); }
+
+        /* Info Pills Grid */
+        .job-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .job-detail-item {
+            background: #F1F5F9;
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            color: var(--heading-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .job-detail-item:hover {
+            background: #E2E8F0;
+        }
+
+        .job-detail-item i {
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+        }
+
+        /* Dynamic Content Area */
+        .dynamic-content-area {
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        /* Timeline & Progress */
+        .timeline-info {
+            background: white;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .timeline-info.urgent {
+            border-color: var(--danger-text);
+            background: #FEF2F2;
+        }
+
+        /* Action Buttons */
+        .job-actions {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.5rem;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-action {
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .btn-apply {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-apply:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-apply:disabled {
+            background: #CBD5E1;
+            cursor: not-allowed;
+        }
+
+        .btn-icon-only {
+            background: #F1F5F9;
+            color: var(--secondary-text);
+            width: 46px;
+            padding: 0;
+        }
+
+        .btn-icon-only:hover {
+            background: #E2E8F0;
+            color: var(--heading-text);
+        }
+
+        .btn-unsave:hover {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+
+        /* Preview Toggle (Clean Text Link) */
+        .quick-preview-toggle {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--secondary-text);
+            padding: 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .quick-preview-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: var(--primary-soft);
+        }
+
+        .quick-preview-toggle.active {
+            background: var(--heading-text);
+            color: white;
+            border-color: var(--heading-text);
+        }
+
+        /* Preview Content */
+        .preview-view {
+            display: none;
+            background: #F8FAFC;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+
+        .preview-section {
+            margin-bottom: 1rem;
+        }
+
+        .preview-section h6 {
+            font-weight: 700;
+            color: var(--heading-text);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-list li {
+            margin-bottom: 0.5rem;
+            color: var(--secondary-text);
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .preview-list li::before {
+            content: "•";
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* Pagination */
+        .pagination .page-link {
+            border: none;
+            color: var(--secondary-text);
+            margin: 0 4px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 107, 53, 0.3);
+        }
+
+        /* Animation Keyframes */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .job-card-wrapper {
+            animation: slideUpFade 0.6s ease-out forwards;
+        }
+
+        /* Custom Scrollbar */
+        .preview-view::-webkit-scrollbar { width: 4px; }
+        .preview-view::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+
+        /* Empty State */
+        .no-saved-jobs-alert {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 4rem 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .empty-icon-bg {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-soft);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem auto;
+        }
+
+        @media (max-width: 768px) {
+            .page-heading { font-size: 2rem; }
+            .job-details-grid { grid-template-columns: 1fr; }
+            .job-actions { grid-template-columns: 1fr auto auto; }
+        }
+
+        /* Custom Modal Style */
+        #confirmUnsaveModal .modal-content {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: none;
+        }
+        #confirmUnsaveModal .modal-dialog {
+            max-width: 400px;
+        }
+        #confirmUnsaveModal .modal-body {
+            padding: 2.5rem;
+        }
+        .modal-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background-color: var(--primary-soft);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-icon-wrapper i {
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+        #confirmUnsaveModal h3 {
+            color: var(--heading-text);
+            font-weight: 700;
+        }
+        #confirmUnsaveModal p {
+            color: var(--secondary-text);
+            font-size: 1rem;
+        }
+        #confirmUnsaveModal .btn-confirm-delete {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        #confirmUnsaveModal .btn-confirm-delete:hover {
+            background-color: var(--primary-hover);
+        }
+        #confirmUnsaveModal .btn-cancel-delete {
+            background-color: #E2E8F0;
+            color: var(--secondary-text);
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        #confirmUnsaveModal .btn-cancel-delete:hover {
+            background-color: #CBD5E1;
+        }
+        /* Animation for modal */
+        #confirmUnsaveModal.fade .modal-dialog {
+            transform: scale(0.9);
+            transition: transform 0.3s ease-out;
+        }
+        #confirmUnsaveModal.show .modal-dialog {
+            transform: scale(1);
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<main class="flex-grow-1">
+    <section class="job-save-header text-center">
+        <div class="container">
+            <h1 class="page-heading animate-slide-up">
+                Saved <span style="color: var(--primary-color);">Jobs</span> <i class="fas fa-bookmark ms-2" style="font-size: 0.6em; vertical-align: top;"></i>
+            </h1>
+            <p class="page-subtitle animate-slide-up animate-delay-1">
+                Your curated list of future opportunities. Don't let them slip away.
+            </p>
+        </div>
+    </section>
+
+    <div class="container pb-5">
+
+        <div class="stats-summary animate-fade-scale animate-delay-2" th:if="${response.hasJobs()}">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="stats-item">
+                        <span class="stats-number" th:text="${response.totalJobCount}">0</span>
+                        <span class="stats-label">Total Saved</span>
+                    </div>
+                </div>
+                <div class="col-md-4 border-start border-end border-light">
+                    <div class="stats-item">
+                        <span class="stats-number" th:text="${response.paginationData.totalPages}">0</span>
+                        <span class="stats-label">Pages</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-item">
+                        <span class="stats-number" th:text="${response.paginationData.currentPage + 1}">1</span>
+                        <span class="stats-label">Current Page</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${response.isEmpty()}" class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="no-saved-jobs-alert">
+                    <div class="empty-icon-bg">
+                        <i class="fas fa-heart-broken fa-3x" style="color: var(--primary-color);"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">No saved jobs yet</h3>
+                    <p class="text-muted mb-4">
+                        Start exploring thousands of jobs and save the ones that match your skills.
+                    </p>
+                    <a href="/jobseeker/job-search" class="btn btn-apply px-5 py-3 rounded-pill">
+                        Browse Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4" id="saved-jobs-container" th:if="${response.hasJobs()}">
+            <div th:each="job, iterStat : ${response.savedJobsData.savedJobs}"
+                 class="col-xl-4 col-lg-6 col-md-12 job-card-wrapper"
+                 th:id="'job-card-wrapper-' + ${job.jobId}"
+                 th:style="'animation-delay: ' + ${iterStat.index * 0.1} + 's'">
+
+                <div class="card job-listing-card" th:data-job-id="${job.jobId}">
+                    <div class="card-body">
+
+                        <div class="company-header">
+                            <img th:src="${job.companyLogo != null ? job.companyLogo : 'https://via.placeholder.com/70x70/FF6B35/FFFFFF?text=' + (job.companyName != null ? job.companyName.substring(0,1) : 'C')}"
+                                 alt="Company Logo" class="company-logo">
+                            <div class="company-info">
+                                <h5 th:text="${job.title}" title="${job.title}">Job Title</h5>
+                                <div class="company-name">
+                                    <i class="fas fa-building me-1 text-muted"></i>
+                                    <span th:text="${job.companyName}">Company</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="status-badges">
+                            <span class="status-badge" th:classappend="${job.isActive != null and job.isActive} ? 'active' : 'expired'">
+                                <span class="dot"></span>
+                                <span th:text="${job.isActive != null and job.isActive} ? 'Recruiting' : 'Closed'">Status</span>
+                            </span>
+
+                            <span th:if="${job.hasApplied != null and job.hasApplied}"
+                                  class="status-badge applied">
+                                <i class="fas fa-check"></i> Applied
+                            </span>
+
+                            <span th:if="${job.industryDisplay != null}" class="status-badge" style="background: #F3E8FF; color: #7E22CE;">
+                                <span th:text="${job.industryDisplay}">Industry</span>
+                            </span>
+                        </div>
+
+                        <div class="dynamic-content-area">
+                            <div class="metadata-view" th:id="'metadata-' + ${job.jobId}">
+                                <div class="job-details-grid">
+                                    <div class="job-detail-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span class="text-truncate" th:text="${job.locationDisplay ?: job.location}">Location</span>
+                                    </div>
+                                    <div class="job-detail-item">
+                                        <i class="fas fa-briefcase"></i>
+                                        <span class="text-truncate" th:text="${job.jobTypeDisplay ?: job.jobType}">Type</span>
+                                    </div>
+                                    <div class="job-detail-item" style="background: var(--primary-soft); color: var(--primary-color);">
+                                        <i class="fas fa-money-bill-wave" style="color: var(--primary-color);"></i>
+                                        <span class="fw-bold" th:text="${job.salaryRangeDisplay ?: job.salaryRange}">Salary</span>
+                                    </div>
+                                    <div class="job-detail-item" th:if="${job.experienceDisplay != null}">
+                                        <i class="fas fa-star"></i>
+                                        <span th:text="${job.experienceDisplay}">Exp</span>
+                                    </div>
+                                </div>
+
+                                <div th:if="${job.maxApplicants != null}" class="mt-3">
+                                    <div class="d-flex justify-content-between text-muted small mb-1">
+                                        <span>Applicants</span>
+                                        <span><span class="fw-bold text-dark" th:text="${job.currentApplicants ?: 0}">0</span> / <span th:text="${job.maxApplicants}">100</span></span>
+                                    </div>
+                                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                                        <div class="progress-bar bg-warning" role="progressbar"
+                                             th:style="'width: ' + ${(job.currentApplicants ?: 0) * 100 / job.maxApplicants} + '%'"></div>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-info" th:if="${job.postedDateFormatted != null || job.applicationDeadlineFormatted != null}"
+                                     th:classappend="${job.isExpired != null and job.isExpired} ? 'urgent' : ''">
+                                    <div class="d-flex justify-content-between align-items-center small">
+                                        <div th:if="${job.postedDateFormatted != null}">
+                                            <span class="text-muted d-block" style="font-size: 0.7rem;">POSTED</span>
+                                            <span class="fw-semibold" th:text="${job.postedDateFormatted}">Date</span>
+                                        </div>
+                                        <div class="text-end" th:if="${job.applicationDeadlineFormatted != null}">
+                                            <span class="text-muted d-block" style="font-size: 0.7rem;">DEADLINE</span>
+                                            <span class="fw-bold"
+                                                  th:style="${job.isExpired != null and job.isExpired} ? 'color: var(--danger-text)' : 'color: var(--success-text)'"
+                                                  th:text="${job.applicationDeadlineFormatted}">Date</span>
+                                        </div>
+                                    </div>
+                                    <div th:if="${job.timeAgoText != null}" class="text-center mt-2 pt-2 border-top border-light">
+                                        <small class="text-muted fst-italic" style="font-size: 0.75rem;">
+                                            Saved <span th:text="${job.timeAgoText}">2 days ago</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="preview-view" th:id="'preview-' + ${job.jobId}">
+                                <div th:if="${job.descriptions != null and !job.descriptions.isEmpty()}" class="preview-section">
+                                    <h6>Description</h6>
+                                    <ul class="preview-list list-unstyled">
+                                        <li th:each="desc : ${job.descriptions}" th:text="${desc}"></li>
+                                    </ul>
+                                </div>
+                                <div th:if="${job.requirements != null and !job.requirements.isEmpty()}" class="preview-section">
+                                    <h6>Requirements</h6>
+                                    <ul class="preview-list list-unstyled">
+                                        <li th:each="req : ${job.requirements}" th:text="${req}"></li>
+                                    </ul>
+                                </div>
+                                <div th:if="${(job.descriptions == null or job.descriptions.isEmpty()) and (job.requirements == null or job.requirements.isEmpty())}"
+                                     class="text-center py-4 text-muted">
+                                    <i class="fas fa-info-circle mb-2"></i>
+                                    <p class="small m-0">No quick preview available. Please view full details.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="quick-preview-toggle"
+                                th:id="'preview-btn-' + ${job.jobId}"
+                                th:onclick="'togglePreview(' + ${job.jobId} + ', event)'">
+                            <span class="btn-text">Show Quick Preview</span>
+                            <i class="fas fa-chevron-down ms-1 chevron-icon"></i>
+                        </button>
+
+                        <div class="job-actions">
+                            <button class="btn-action btn-apply"
+                                    th:onclick="|applyToJob(${job.jobId})|"
+                                    th:disabled="${(job.isExpired != null and job.isExpired) or (job.canAcceptMoreApplicants != null and !job.canAcceptMoreApplicants) or (job.hasApplied != null and job.hasApplied)}">
+                                <span th:text="${job.hasApplied != null and job.hasApplied} ? 'Applied' : 'Apply Now'">Apply</span>
+                                <i class="fas fa-arrow-right ms-1" style="font-size: 0.8em;"></i>
+                            </button>
+
+                            <button class="btn-action btn-icon-only"
+                                    th:onclick="|viewJobDetails(${job.jobId})|"
+                                    data-bs-toggle="tooltip" title="View Details">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+
+                            <button class="btn-action btn-icon-only btn-unsave"
+                                    th:onclick="|confirmUnsave(${job.jobId})|"
+                                    data-bs-toggle="tooltip" title="Remove from Saved">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${response.hasJobs() and response.paginationData.totalPages > 1}" class="mt-5">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${response.paginationData.isFirst} ? 'disabled'">
+                        <a class="page-link" th:href="@{/jobseeker/job-save(page=${response.paginationData.previousPage})}">
+                            <i class="fas fa-chevron-left small"></i>
+                        </a>
+                    </li>
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(1, response.paginationData.totalPages)}"
+                        th:classappend="${pageNum == response.paginationData.currentPage + 1} ? 'active'">
+                        <a class="page-link" th:href="@{/jobseeker/job-save(page=${pageNum - 1})}" th:text="${pageNum}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${response.paginationData.isLast} ? 'disabled'">
+                        <a class="page-link" th:href="@{/jobseeker/job-save(page=${response.paginationData.nextPage})}">
+                            <i class="fas fa-chevron-right small"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+<div id="customToastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1090; max-width: 350px;"></div>
+
+<!-- Friendlier Confirmation Modal -->
+<div class="modal fade" id="confirmUnsaveModal" tabindex="-1" aria-labelledby="confirmUnsaveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="modal-icon-wrapper">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h3 class="mb-2" id="confirmUnsaveModalLabel">Remove Job?</h3>
+                <p class="mb-4">
+                    This job will be removed from your saved list.
+                </p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-confirm-delete" id="confirmUnsaveBtn">Yes, Remove</button>
+                    <button type="button" class="btn btn-cancel-delete" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // 1. Lấy Token chuẩn từ Meta
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    // Initialize Bootstrap Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Toggle Preview Logic
+    function togglePreview(jobId, event) {
+        const metadataView = document.getElementById(`metadata-${jobId}`);
+        const previewView = document.getElementById(`preview-${jobId}`);
+        const toggleBtn = document.getElementById(`preview-btn-${jobId}`);
+        const btnText = toggleBtn.querySelector('.btn-text');
+        const icon = toggleBtn.querySelector('.chevron-icon');
+
+        if (previewView.style.display === 'none' || previewView.style.display === '') {
+            metadataView.style.display = 'none';
+            previewView.style.display = 'block';
+            toggleBtn.classList.add('active');
+            btnText.textContent = 'Close Preview';
+            icon.className = 'fas fa-chevron-up ms-1 chevron-icon';
+        } else {
+            metadataView.style.display = 'block';
+            previewView.style.display = 'none';
+            toggleBtn.classList.remove('active');
+            btnText.textContent = 'Show Quick Preview';
+            icon.className = 'fas fa-chevron-down ms-1 chevron-icon';
+        }
+    }
+
+    function applyToJob(jobId) {
+        window.location.href = `/jobseeker/apply-job/${jobId}`;
+    }
+
+    function viewJobDetails(jobId) {
+        window.location.href = `/jobseeker/job-detail/${jobId}`;
+    }
+
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmUnsaveModal'));
+    const confirmUnsaveBtn = document.getElementById('confirmUnsaveBtn');
+    let jobIdToUnsave = null;
+
+    function confirmUnsave(jobId) {
+        jobIdToUnsave = jobId;
+        confirmModal.show();
+    }
+
+    confirmUnsaveBtn.addEventListener('click', () => {
+        if (jobIdToUnsave) {
+            performUnsave(jobIdToUnsave);
+        }
+        confirmModal.hide();
+    });
+
+
+    function performUnsave(jobId) {
+        const cardWrapper = document.getElementById(`job-card-wrapper-${jobId}`);
+
+        fetch(`/jobseeker/unsave-job/${jobId}`, {
+            method: 'POST', // Đảm bảo Controller là @PostMapping
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken // <--- QUAN TRỌNG: Gửi header đúng tên
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Hiệu ứng xóa UI
+                if(cardWrapper) {
+                    cardWrapper.style.transition = 'all 0.3s ease';
+                    cardWrapper.style.transform = 'scale(0.9) translateY(-20px)';
+                    cardWrapper.style.opacity = '0';
+                    setTimeout(() => {
+                        cardWrapper.remove();
+                        // Check nếu hết job thì reload để hiện empty state
+                        if(document.querySelectorAll('.job-card-wrapper').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+                // Gọi Toast (đảm bảo hàm này tồn tại)
+                if (typeof showToast === "function") showToast('Job removed!', 'success');
+                else alert('Job removed!');
+            } else {
+                alert(data.message || 'Failed to remove.');
+            }
+        })
+        .catch(err => {
+            console.error('Error unsaving job:', err);
+            alert('Error occurred while unsaving job.');
+        });
+    }
+
+    // Dummy showToast if not defined elsewhere
+    if (typeof showToast !== 'function') {
+        function showToast(msg, type) {
+            alert(`[${type.toUpperCase()}] ${msg}`);
+        }
+    }
+</script>
+
+</body>
+</html>

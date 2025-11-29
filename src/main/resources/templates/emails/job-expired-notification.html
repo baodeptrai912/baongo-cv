@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Posting Expired - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Cam trầm - Thông báo trạng thái */
+        .header {
+            background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+            color: white;
+            padding: 45px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-icon { font-size: 32px; margin-right: 10px; }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #c2410c; font-weight: 700; }
+
+        /* Job Card - Thiết kế giống thẻ Job trên web */
+        .job-card {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-card::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+            background-color: #9ca3af; /* Màu xám báo hiệu đã đóng */
+        }
+
+        .job-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .job-meta {
+            font-size: 14px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-badge {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: auto;
+            text-transform: uppercase;
+        }
+
+        /* Info Box */
+        .info-box {
+            background-color: #fff7ed; /* Cam rất nhạt */
+            border-left: 4px solid #f97316;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 15px;
+            color: #4b5563;
+        }
+
+        /* Action Buttons Group */
+        .action-group {
+            display: flex;
+            gap: 15px;
+            margin: 35px 0;
+        }
+
+        .btn {
+            flex: 1;
+            text-align: center;
+            padding: 14px 0;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.2);
+            border-bottom: 3px solid #ea580c;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+
+        .btn-secondary {
+            background-color: #ffffff;
+            color: #4b5563 !important;
+            border: 1px solid #d1d5db;
+            border-bottom: 3px solid #d1d5db;
+        }
+        .btn-secondary:hover { background-color: #f9fafb; color: #1f2937 !important; }
+
+        /* Closing */
+        .closing {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ea580c, #fb923c);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .action-group { flex-direction: column; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><span class="header-icon">⏰</span> Posting Expired</h1>
+        <p>Your job listing is no longer active</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${employerName}">Employer</span>,
+        </div>
+
+        <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+            The following job posting has reached its expiration date and has been automatically closed on <strong>BaoNgoCV</strong>. It is no longer visible to candidates.
+        </p>
+
+        <!-- Job Card Detail -->
+        <div class="job-card">
+            <span class="job-title" th:text="${jobTitle}">Senior Software Engineer</span>
+            <div class="job-meta">
+                <span>Expired on: <strong th:text="${#dates.format(expirationDate, 'MMM dd, yyyy')}">Oct 31, 2025</strong></span>
+                <span class="status-badge">Inactive</span>
+            </div>
+        </div>
+
+        <!-- Tip Box -->
+        <div class="info-box">
+            <strong>💡 What now?</strong><br>
+            Don't worry! All applications received are safe. You can still review candidates or choose to repost this job to get more applicants.
+        </div>
+
+        <!-- Dual Actions -->
+        <div class="action-group">
+            <a href="https://baongocv.com/company/job-posting-management" class="btn btn-primary">
+                🔄 Repost Job
+            </a>
+            <a href="https://baongocv.com/company/candidates" class="btn btn-secondary">
+                👥 View Candidates
+            </a>
+        </div>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Need assistance? Our support team is here to help.</p>
+            <p style="margin-top: 10px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Dashboard</a> |
+            <a href="#">Post a Job</a> |
+            <a href="#">Help Center</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

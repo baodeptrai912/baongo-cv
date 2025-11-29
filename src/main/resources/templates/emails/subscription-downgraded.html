@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Alert - BaoNgoCV</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Header: Gradient Cam trầm - Cảnh báo nhẹ */
+        .header {
+            background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px 40px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .highlight { color: #ea580c; font-weight: 700; }
+
+        /* Warning Box - Giải thích rõ */
+        .warning-box {
+            background-color: #fff7ed; /* Cam rất nhạt */
+            border: 1px solid #fdba74;
+            border-left: 5px solid #ea580c; /* Viền cam đậm */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .warning-box h3 {
+            color: #9a3412;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .warning-box p {
+            font-size: 14px;
+            color: #4b5563;
+            margin: 0;
+        }
+
+        /* Comparison Table - So sánh lợi ích */
+        .comparison-table {
+            width: 100%;
+            margin: 30px 0;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            color: #6b7280;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .lost-benefit {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(to bottom, #ff8040, #ff6b35);
+            color: white !important;
+            padding: 16px 0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 35px 0;
+            box-shadow: 0 4px 6px rgba(255, 107, 53, 0.25);
+            border-bottom: 4px solid #ea580c;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(to bottom, #ff9a66, #ff7d4d);
+            transform: translateY(-2px);
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 35px;
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+            padding-top: 25px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .closing strong { color: #1f2937; }
+
+        /* Footer Bar */
+        .footer-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #ea580c, #f97316);
+            width: 100%;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        .footer a:hover { color: #ea580c; text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 10px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>⚠️ Plan Expired</h1>
+        <p>Your subscription has changed</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+            Hello <span class="highlight" th:text="${companyName}">ABC Company</span>,
+        </div>
+
+        <!-- Alert Box -->
+        <div class="warning-box">
+            <h3>Action Required</h3>
+            <p>Your <strong>PREMIUM</strong> subscription has expired. Your account has been automatically switched to the <strong>FREE</strong> plan.</p>
+        </div>
+
+        <p style="font-size: 15px; color: #374151; margin-bottom: 20px;">
+            To continue enjoying uninterrupted access to premium recruiting tools, please renew your subscription. Here's what changed:
+        </p>
+
+        <!-- Comparison Table -->
+        <table class="comparison-table">
+            <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Unlimited Job Posts</td>
+                <td class="lost-benefit">Locked</td>
+            </tr>
+            <tr>
+                <td>Advanced Candidate Search</td>
+                <td class="lost-benefit">Locked</td>
+            </tr>
+            <tr>
+                <td>Basic Profile</td>
+                <td style="color: #16a34a; font-weight: bold;">Active</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- CTA Button -->
+        <a th:href="${upgradeUrl}" class="cta-button">
+            🔄 Restore Premium Access
+        </a>
+
+        <!-- Closing -->
+        <div class="closing">
+            <p>Need help? Contact our billing support team.</p>
+            <p style="margin-top: 10px;">The BaoNgoCV Team</p>
+        </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <div class="footer-bar"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <img src="cid:logoImage" alt="BaoNgoCv Logo" width="80" style="margin-bottom: 15px; opacity: 0.8;"/>
+        <p>&copy; <span th:text="${currentYear}">2025</span> BaoNgoCV. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="#">Billing Settings</a> |
+            <a href="#">Compare Plans</a> |
+            <a href="#">Support</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

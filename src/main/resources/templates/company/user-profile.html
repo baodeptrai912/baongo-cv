@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <title th:text="${userProfile.fullName} + ' - Profile'">Candidate Profile</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script th:src="@{/js/Toast.js}" defer></script>
+    <script th:src="@{/js/FetchNotification.js}" defer></script>
+
+    <link rel="stylesheet" th:href="@{/css/whole.css}">
+
+    <style>
+        :root {
+            /* Brand Colors */
+            --primary: #f97316;
+            --primary-dark: #ea580c;
+
+            /* UI Colors */
+            --bg-app: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- [FIXED] SỬA LỖI KHOẢNG CÁCH --- */
+        .app-content-wrapper {
+            flex: 1;
+            width: 100%;
+            /* Thay đổi ở đây: Bỏ padding-top để thanh cam dính sát header */
+            padding-top: 0;
+            padding-bottom: 60px; /* Đẩy nội dung lên khỏi footer một chút */
+        }
+
+        /* --- PAGE HEADER (Thanh màu cam) --- */
+        .page-sub-header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            padding: 24px 0;
+            color: white;
+            /* Margin âm để tạo hiệu ứng card đè lên (nếu muốn) */
+            margin-bottom: -40px;
+            padding-bottom: 60px;
+        }
+
+        .btn-glass {
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3); color: white;
+            padding: 8px 16px; border-radius: 8px; font-weight: 600;
+            text-decoration: none; transition: all 0.2s; font-size: 0.9rem;
+            display: inline-flex; align-items: center;
+        }
+        .btn-glass:hover { background: rgba(255,255,255,0.3); color: white; transform: translateY(-1px); }
+
+        /* --- CARDS --- */
+        .system-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            height: 100%;
+        }
+        .card-body-custom { padding: 32px; }
+
+        /* --- AVATAR & INFO --- */
+        .avatar-ring {
+            width: 120px; height: 120px; margin: 0 auto 20px; padding: 4px; border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--primary), #fed7aa, var(--primary));
+            display: flex; justify-content: center; align-items: center;
+        }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; background: white; }
+        .avatar-placeholder {
+            width: 100%; height: 100%; border-radius: 50%; border: 4px solid white;
+            background: white; color: var(--text-main); font-size: 2.5rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .info-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+            font-size: 0.9rem; color: var(--text-main); padding: 10px;
+            background: #f8fafc; border-radius: 8px;
+        }
+        .info-row i { color: var(--primary); width: 20px; text-align: center; }
+
+        .skill-tag {
+            display: inline-block; background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+            margin: 0 4px 8px 0;
+        }
+
+        /* --- TIMELINE --- */
+        .timeline-container { padding-left: 12px; border-left: 2px solid #e2e8f0; margin-left: 8px; }
+        .timeline-item { position: relative; padding-left: 28px; padding-bottom: 32px; }
+        .timeline-item:last-child { padding-bottom: 0; }
+
+        .timeline-marker {
+            position: absolute; left: -7px; top: 4px; width: 12px; height: 12px;
+            background: white; border: 2px solid #cbd5e1; border-radius: 50%;
+        }
+        .timeline-item:hover .timeline-marker { border-color: var(--primary); background: var(--primary); }
+
+        .timeline-title { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+        .timeline-subtitle { font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+        .timeline-time { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 8px; }
+
+        /* --- LOCK SCREEN --- */
+        .blur-lines { opacity: 0.3; filter: blur(4px); margin-top: 30px; user-select: none; }
+        .fake-line { height: 10px; background: #e2e8f0; border-radius: 5px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/headerAndFooter :: header}"></div>
+
+<div class="app-content-wrapper">
+
+    <div class="page-sub-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h4 class="m-0 fw-bold">Candidate Profile</h4>
+            <div th:if="${userProfile != null}" class="btn-glass">
+                <i class="fas" th:classappend="${userProfile.isPrivate ? 'fa-lock' : 'fa-globe'}"></i>
+                <span class="ms-2" th:text="${userProfile.isPrivate ? 'Private Mode' : 'Public Mode'}">Mode</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="position: relative; z-index: 2;">
+        <div class="row g-4">
+
+            <div class="col-lg-4">
+                <div class="system-card card-body-custom text-center">
+                    <div class="avatar-ring">
+                        <img th:if="${userProfile.avatar != null and !#strings.isEmpty(userProfile.avatar)}"
+                             th:src="${userProfile.avatar}" class="avatar-img" alt="Avatar">
+                        <div th:unless="${userProfile.avatar != null and !#strings.isEmpty(userProfile.avatar)}"
+                             class="avatar-placeholder" th:text="${#strings.substring(userProfile.fullName, 0, 1).toUpperCase()}">A</div>
+                    </div>
+
+                    <h2 class="fw-bold mb-1" style="font-size: 1.5rem;" th:text="${userProfile.fullName}">Name</h2>
+                    <p class="text-muted mb-4" th:text="${userProfile.bio ?: 'No bio provided'}">Bio</p>
+
+                    <div class="text-start">
+                        <div class="info-row">
+                            <i class="far fa-envelope"></i>
+                            <span class="text-truncate" th:text="${userProfile.email}">email</span>
+                        </div>
+                        <div class="info-row" th:if="${!userProfile.isPrivate and userProfile.phoneNumber != null}">
+                            <i class="fas fa-phone-alt"></i>
+                            <span th:text="${userProfile.phoneNumber}">phone</span>
+                        </div>
+                        <div class="info-row" th:if="${!userProfile.isPrivate}">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Hanoi, Vietnam</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-start" th:if="${!userProfile.isPrivate and not #lists.isEmpty(userProfile.skills)}">
+                        <label class="small fw-bold text-muted text-uppercase mb-2 d-block">Skills</label>
+                        <div>
+                            <span class="skill-tag" th:each="skill : ${userProfile.skills}" th:text="${skill.displayName}">Java</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div th:if="${userProfile.isPrivate}" class="system-card card-body-custom text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-lock fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <h3 class="fw-bold">Profile is Private</h3>
+                    <p class="text-muted">Details are restricted by the candidate.</p>
+                    <div class="blur-lines w-75 mx-auto">
+                        <div class="fake-line" style="width: 100%"></div>
+                        <div class="fake-line" style="width: 80%"></div>
+                        <div class="fake-line" style="width: 90%"></div>
+                    </div>
+                </div>
+
+                <div th:if="${!userProfile.isPrivate}" class="d-flex flex-column gap-4">
+
+                    <div class="system-card card-body-custom">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i class="fas fa-briefcase text-primary fs-5"></i>
+                            <h5 class="fw-bold m-0 text-uppercase text-muted" style="font-size: 0.85rem; letter-spacing: 1px;">Work Experience</h5>
+                        </div>
+
+                        <div class="timeline-container" th:if="${not #lists.isEmpty(userProfile.experiences)}">
+                            <div class="timeline-item" th:each="exp : ${userProfile.experiences}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-title" th:text="${exp.jobTitle}">Title</div>
+                                <div class="timeline-subtitle" th:text="${exp.companyName}">Company</div>
+                                <span class="timeline-time" th:text="${exp.startDate != null ? #temporals.format(exp.startDate, 'MMM yyyy') : ''} + ' - ' + ${exp.endDate != null ? #temporals.format(exp.endDate, 'MMM yyyy') : 'Present'}">Date</span>
+                                <div class="text-muted small mt-2" th:if="${exp.description}" th:text="${exp.description}">Desc</div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(userProfile.experiences)}" class="text-center text-muted small">No experience listed.</div>
+                    </div>
+
+                    <div class="system-card card-body-custom">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i class="fas fa-graduation-cap text-primary fs-5"></i>
+                            <h5 class="fw-bold m-0 text-uppercase text-muted" style="font-size: 0.85rem; letter-spacing: 1px;">Education</h5>
+                        </div>
+
+                        <div class="timeline-container" th:if="${not #lists.isEmpty(userProfile.educations)}">
+                            <div class="timeline-item" th:each="edu : ${userProfile.educations}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-title" th:text="${edu.degree}">Degree</div>
+                                <div class="timeline-subtitle" th:text="${edu.institution}">School</div>
+                                <span class="timeline-time" th:text="${edu.startDate != null ? #temporals.format(edu.startDate, 'yyyy') : ''} + ' - ' + ${edu.endDate != null ? #temporals.format(edu.endDate, 'yyyy') : 'Present'}">Date</span>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(userProfile.educations)}" class="text-center text-muted small">No education listed.</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/headerAndFooter :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

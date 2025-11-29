@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Employers - Premium List | BaoNgoCv</title>
+    <link rel="shortcut icon" href="/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+
+    <!-- CSRF cho Ajax -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Fonts & CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/whole.css" rel="stylesheet">
+    <link href="/css/Home.css" rel="stylesheet">
+
+    <!-- JS chung -->
+    <script src="/js/Notification-filtering.js" defer></script>
+    <script src="/js/FetchNotification.js" defer></script>
+    <script src="/js/Toast.js" defer></script>
+    <script src="/js/confirmModal.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* --- PREMIUM STYLES V3 --- */
+        :root {
+            --card-bg: #ffffff;
+            --card-hover-shadow: 0 20px 40px rgba(255, 69, 0, 0.08);
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --primary-color: #ff6b35;
+            --primary-hover: #e03e00;
+            --primary-light: #fff7ed;
+            --border-color: #E2E8F0;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .search-header {
+            background: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%);
+            color: white;
+            padding: 3rem 0 5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #f8f9fa;
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        }
+
+        .search-header .display-5 {
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+        .search-summary {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .company-card {
+            background: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            overflow: visible;
+            margin-top: 40px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04),
+            0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            position: relative;
+            height: calc(100% - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .company-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card-cover {
+            height: 90px;
+            background: linear-gradient(120deg, #fff5f2 0%, #ffe4d6 100%);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-cover::before {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 60%);
+            opacity: 0.5;
+        }
+
+        .company-logo-floating {
+            width: 84px;
+            height: 84px;
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 6px;
+            position: absolute;
+            top: 45px;
+            left: 24px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+            z-index: 2;
+            border: 3px solid white;
+        }
+
+        .company-logo-floating img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .btn-follow-corner {
+            position: absolute;
+            top: 105px;
+            right: 24px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(255, 69, 0, 0.06);
+            border: 1px solid transparent;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        .btn-follow-corner:hover {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 69, 0, 0.2);
+        }
+
+        .btn-following {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .card-body {
+            padding: 65px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .company-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .company-name:hover {
+            color: var(--primary-color);
+        }
+
+        .company-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .meta-badge {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .metric-box {
+            text-align: center;
+            position: relative;
+        }
+
+        .metric-box:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0; top: 15%; height: 70%; width: 1px;
+            background: #e2e8f0;
+        }
+
+        .metric-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            display: block;
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .val-jobs { color: var(--primary-color); }
+        .val-interviews { color: #8b5cf6; }
+        .val-followers { color: #3b82f6; }
+
+        .btn-view-jobs {
+            margin-top: auto;
+            width: 100%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: var(--text-main);
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-view-jobs:hover {
+            border-color: var(--primary-color);
+            background: #fff5f2;
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .filter-sidebar {
+            border: none;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            padding: 24px;
+        }
+
+        /* Enhanced Pagination */
+        .pagination-container {
+            padding: 1.25rem 1.5rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(to top, #FAFBFC 0%, white 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pagination {
+            gap: 0.375rem;
+        }
+
+        .pagination .page-link {
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 0.875rem;
+            min-width: 36px;
+            text-align: center;
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #ff6b35 0%, #e03e00 100%);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .pagination .page-link:hover:not(.active) {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Spinner container style */
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px; /* Give it some height */
+        }
+
+        #company-grid-container {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="fragments/headerAndFooter :: header"></div>
+
+<main>
+    <section class="search-header text-center">
+        <div class="container" style="position: relative; z-index: 2;">
+            <h1 class="display-5 fw-bold text-white mb-2" style="letter-spacing: -1px;">Find Your Next Great Workplace</h1>
+            <p class="lead text-white-50 mb-0">Discover Great Companies Where your next career chapter begins</p>
+
+            <div class="search-summary fade-in mt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8 text-start">
+                        <h5 class="mb-1 text-white" th:text="${data.pageTitle}">Featured Employers</h5>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-building me-1"></i>
+                        <span id="total-results-header" th:text="${data.totalResults}">0</span> Companies
+                    </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container pb-5" style="margin-top: -40px; position: relative; z-index: 2;">
+        <div class="row g-4">
+
+            <!-- FILTER SIDEBAR -->
+            <div class="col-lg-3">
+                <div class="filter-sidebar sticky-top" style="top: 20px;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="fw-bold mb-0"><i class="fas fa-sliders-h me-2 text-primary"></i>Filters</h6>
+                        <a href="/companies" class="text-muted small text-decoration-none hover-primary">Reset</a>
+                    </div>
+
+                    <form id="filterForm" th:action="@{/companies}" method="GET">
+                        <input type="hidden" name="sort" th:value="${data.currentSortType}">
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-start-0 ps-0"
+                                       name="keyword" th:value="${param.keyword}" placeholder="Company name...">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Industry</label>
+                            <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                                <div class="form-check" th:each="ind : ${data.availableIndustries}">
+                                    <input class="form-check-input" type="checkbox" name="industry"
+                                           th:value="${ind}" th:id="${'ind-'+ind}"
+                                           th:checked="${param.industry != null && #lists.contains(param.industry, ind)}">
+                                    <label class="form-check-label" th:for="${'ind-'+ind}" th:text="${ind}">IT</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Location</label>
+                            <select class="form-select bg-light" name="location">
+                                <option value="">All Locations</option>
+                                <option th:each="loc : ${data.availableLocations}"
+                                        th:value="${loc}" th:text="${loc}"
+                                        th:selected="${param.location == loc}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold shadow-sm" id="applyFiltersBtn">
+                            Apply Filters
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT LIST -->
+            <div class="col-lg-9">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 px-1">
+                    <p class="mb-2 mb-md-0 text-muted fw-medium small">
+                        Found <span class="fw-bold text-dark" id="total-results" th:text="${data.totalResults}">0</span> results
+                    </p>
+
+                    <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm border">
+                        <span class="text-muted small me-2">Sort by:</span>
+                        <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-dark p-0 w-auto"
+                                id="sort-select" onchange="updateSort(this.value)" style="cursor: pointer; box-shadow: none;">
+                            <option value="score" th:selected="${data.currentSortType == 'score'}">Recommended</option>
+                            <option value="jobs" th:selected="${data.currentSortType == 'jobs'}">Most Open Jobs</option>
+                            <option value="interviews" th:selected="${data.currentSortType == 'interviews'}">
+                                Most Active (Interviews)
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- COMPANY GRID -->
+                <div class="row g-4" id="company-grid-container">
+                    <!-- Content will be rendered by JavaScript -->
+                </div>
+
+                <!-- PAGINATION -->
+                <nav class="pagination-container" id="pagination-nav"
+                     th:style="${data.companies.totalPages <= 1 ? 'display: none' : ''}">
+                    <ul class="pagination mb-0" id="pagination-list">
+                        <!-- JavaScript will render pagination here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/headerAndFooter :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JS có inline Thymeleaf -->
+<script th:inline="javascript">
+    const initialData = /*[[${data}]]*/ {};
+    const MIN_LOADING_TIME = 800; // ms
+
+    function updateSort(val) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', val);
+        url.searchParams.set('page', 0);
+        window.location.href = url.toString();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterForm = document.getElementById('filterForm');
+        const applyBtn = document.getElementById('applyFiltersBtn');
+        const gridContainer = document.getElementById('company-grid-container');
+        const paginationNav = document.getElementById('pagination-nav');
+        const paginationList = document.getElementById('pagination-list');
+        const totalResultsEl = document.getElementById('total-results');
+        const totalResultsHeaderEl = document.getElementById('total-results-header');
+        const sortSelect = document.getElementById('sort-select');
+
+        // Initial render
+        renderCompanyGrid(initialData.companies.content);
+        renderPagination(initialData.companies);
+
+        filterForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            loadCompanies(0);
+        });
+
+        function loadCompanies(page) {
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
+            params.set('page', page);
+            params.set('size', 9); // Or your desired page size
+            params.set('sort', sortSelect.value);
+
+            const url = `/company/api/companies?${params.toString()}`;
+            const startTime = Date.now();
+
+            // Show loading spinner
+            gridContainer.innerHTML = `
+                <div class="col-12">
+                    <div class="spinner-container">
+                        <div class="spinner-border" role="status" style="color: var(--primary-color); width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>`;
+
+            const originalBtnHtml = applyBtn.innerHTML;
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying...';
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const elapsed = Date.now() - startTime;
+                    const delay = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+                    setTimeout(() => {
+                        renderCompanyGrid(data.companies.content);
+                        renderPagination(data.companies); // Pass the correct object
+                        totalResultsEl.textContent = data.totalResults;
+                        totalResultsHeaderEl.textContent = data.totalResults;
+
+                        // Update URL without reloading
+                        const newUrl = `${window.location.pathname}?${params.toString()}`;
+                        history.pushState({path: newUrl}, '', newUrl);
+
+                    }, delay);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch companies:', err);
+                    gridContainer.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="bg-white p-5 rounded-4 shadow-sm border border-dashed">
+                                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                <h5 class="fw-bold">Error Loading Companies</h5>
+                                <p class="text-muted">Please try again later.</p>
+                            </div>
+                        </div>`;
+                    showToast('Could not load companies.', 'error');
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        applyBtn.disabled = false;
+                        applyBtn.innerHTML = originalBtnHtml;
+                    }, Math.max(0, MIN_LOADING_TIME - (Date.now() - startTime)));
+                });
+        }
+
+        function renderCompanyGrid(companies) {
+            gridContainer.innerHTML = '';
+
+            if (!companies || companies.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <div class="bg-white p-5 rounded-4 shadow-sm border border-dashed">
+                            <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+                            <h5 class="fw-bold">No companies found</h5>
+                            <p class="text-muted">Try adjusting your search filters.</p>
+                            <a href="/company/companies" class="btn btn-outline-primary rounded-pill px-4">Clear All Filters</a>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            companies.forEach(company => {
+                const isFollowed = company.isFollowed;
+                const companyCardHtml = `
+                    <div class="col-md-6 col-xl-4">
+                        <div class="company-card h-100">
+                            <div class="card-cover"></div>
+                            <div class="company-logo-floating">
+                                <img src="${company.logoUrl || '/img/default-company.png'}" onerror="this.src='/img/default-company.png'" alt="Logo">
+                            </div>
+                            <button class="btn-follow-corner ${isFollowed ? 'btn-following' : ''}"
+                                    data-company-id="${company.id}"
+                                    onclick="toggleFollow(this)"
+                                    title="${isFollowed ? 'Unfollow' : 'Follow'}">
+                                <i class="${isFollowed ? 'fas fa-check' : 'far fa-heart'}"></i>
+                                <span>${isFollowed ? 'Following' : 'Follow'}</span>
+                            </button>
+                            <div class="card-body">
+                                <a href="/jobseeker/company-detail/${company.id}" class="company-name">${company.name}</a>
+                                <div class="company-meta">
+                                    <span class="meta-badge text-truncate" style="max-width: 80px;">${company.industry || 'General'}</span>
+                                    <span class="text-truncate small">
+                                        <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                        <span>${company.location}</span>
+                                    </span>
+                                </div>
+                                <div class="metrics-grid">
+                                    <div class="metric-box"><span class="metric-value val-jobs">${company.openJobs}</span><span class="metric-label">Jobs</span></div>
+                                    <div class="metric-box"><span class="metric-value val-interviews">${company.activeInterviews}</span><span class="metric-label">Interviews</span></div>
+                                    <div class="metric-box"><span class="metric-value val-followers">${company.followersCount}</span><span class="metric-label">Fans</span></div>
+                                </div>
+                                <a href="/jobseeker/company-detail/${company.id}#job-openings-section" class="btn-view-jobs">
+                                    View Openings <i class="fas fa-arrow-right small opacity-50"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>`;
+                gridContainer.innerHTML += companyCardHtml;
+            });
+        }
+
+        function renderPagination(pageData) {
+            // **FIX HERE: Check for the nested 'page' object from API response**
+            const paginationInfo = pageData.page ? pageData.page : pageData;
+
+            if (paginationInfo.totalPages <= 1) {
+                paginationNav.style.display = 'none';
+                return;
+            }
+            paginationNav.style.display = 'flex';
+            paginationList.innerHTML = '';
+
+            let html = '';
+            const currentPage = paginationInfo.number;
+            const totalPages = paginationInfo.totalPages;
+
+            // Previous
+            html += `<li class="page-item ${paginationInfo.first ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                     </li>`;
+
+            const maxVisible = 5;
+            let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(0, endPage - maxVisible + 1);
+            }
+
+            if (startPage > 0) {
+                html += `<li class="page-item"><a class="page-link" href="#" data-page="0">1</a></li>`;
+                if (startPage > 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${i}">${i + 1}</a>
+                         </li>`;
+            }
+
+            if (endPage < totalPages - 1) {
+                if (endPage < totalPages - 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages - 1}">${totalPages}</a></li>`;
+            }
+
+            // Next
+            html += `<li class="page-item ${paginationInfo.last ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                     </li>`;
+
+            paginationList.innerHTML = html;
+        }
+
+        paginationList.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = e.target.closest('a.page-link');
+            if (target && !target.parentElement.classList.contains('disabled')) {
+                const page = parseInt(target.dataset.page, 10);
+                if (!isNaN(page)) {
+                    loadCompanies(page);
+                }
+            }
+        });
+    });
+
+    async function toggleFollow(btn) {
+        const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+        const isCompany = /*[[${#authorization.expression('hasRole(''COMPANY'')')}]]*/ false;
+
+        if (!isAuthenticated) {
+            if (typeof showToast === 'function') {
+                showToast('Please log in to follow companies.', 'info');
+            } else {
+                alert('Please log in to follow companies.');
+            }
+            return;
+        }
+
+        if (isCompany) {
+            if (typeof showToast === 'function') {
+                showToast('This feature is for job seekers only.', 'warning');
+            } else {
+                alert('This feature is for job seekers only.');
+            }
+            return;
+        }
+
+        const companyId = btn.dataset.companyId;
+        const isFollowing = btn.classList.contains('btn-following');
+        const shouldFollow = !isFollowing;
+        const url = `/jobseeker/job-following?companyId=${companyId}&follow=${shouldFollow}`;
+
+        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            const res = await fetch(url, { // NOSONAR
+                method: 'POST',
+                headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}
+            });
+
+            // Luôn parse JSON để lấy message, dù thành công hay thất bại
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Ném lỗi với message cụ thể từ backend
+                throw new Error(data.message || 'Request failed');
+            }
+
+            btn.classList.toggle('btn-following');
+            const nowFollowing = btn.classList.contains('btn-following');
+            btn.innerHTML = nowFollowing
+                ? '<i class="fas fa-check"></i> Following'
+                : '<i class="far fa-heart"></i> Follow';
+            btn.title = nowFollowing ? 'Unfollow' : 'Follow';
+
+            // Hiển thị message thành công từ backend
+            if (typeof showToast === 'function') showToast(data.message, 'success');
+
+        } catch (e) {
+            btn.innerHTML = originalHtml;
+            if (typeof showToast === 'function') {
+                // Hiển thị message lỗi cụ thể từ backend
+                showToast(e.message || 'Could not update follow status.', 'error');
+            } else {
+                alert('Could not update follow status.');
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

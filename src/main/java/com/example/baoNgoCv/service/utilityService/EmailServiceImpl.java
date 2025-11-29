@@ -35,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
-
+    private final SendGridEmailClient sendGridEmailClient;
     // --- DEPENDENCIES ---
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
@@ -577,25 +577,27 @@ public class EmailServiceImpl implements EmailService {
         log.info("Finished cleaning up. Verification store size: {}, Rate limit store size: {}", verificationStore.size(), rateLimitStore.size());
     }
 
-    private void sendEmailWithLogo(String to, String subject, String templateName, Context context) throws MessagingException {
-        // 1. Tạo một đối tượng MimeMessage để xây dựng email.
-        MimeMessage message = mailSender.createMimeMessage();
-        // 2. Sử dụng MimeMessageHelper để dễ dàng thao tác với email (đính kèm file, nội dung HTML).
-        MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
-        // 3. Đặt biến 'logoImage' để template có thể tham chiếu đến logo.
-        context.setVariable("logoImage", "logoImage");
-        // 4. Xử lý template Thymeleaf để tạo ra chuỗi HTML cuối cùng.
-        String htmlContent = templateEngine.process(templateName, context);
-        // 5. Thiết lập các thông tin cơ bản của email.
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
-        helper.setFrom(mailFromAddress);
-        // 6. Tải file logo từ classpath.
-        ClassPathResource logo = new ClassPathResource("static/img/logo/logoShop.png");
-        // 7. Đính kèm logo vào email với Content-ID là 'logoImage'.
-        helper.addInline("logoImage", logo, "image/png");
-        // 8. Gửi email.
-        mailSender.send(message);
+    private void sendEmailWithLogo(String to, String subject, String templateName, Context context)
+            throws MessagingException {
+
+        try {
+            // 1. Thêm biến logo URL cho template (nếu cần)
+            context.setVariable("logoUrl", frontendUrl + "/img/logo/logoShop.png");
+
+            // 2. Render HTML bằng Thymeleaf
+            String htmlContent = templateEngine.process(templateName, context);
+
+            // 3. Gửi qua SendGrid HTTP
+            sendGridEmailClient.sendHtmlEmail(to, subject, htmlContent);
+
+        } catch (Exception e) {
+            log.error("Failed to send email via SendGrid to {} with subject {}: {}", to, subject, e.getMessage(), e);
+            if (e instanceof MessagingException) {
+                throw (MessagingException) e;
+            }
+            // Quăng ra EmailSendingException để logic phía trên vẫn dùng như cũ
+            throw new EmailSendingException("Failed to send email via SendGrid", e, to);
+        }
     }
+
 }

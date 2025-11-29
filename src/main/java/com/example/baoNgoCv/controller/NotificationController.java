@@ -157,7 +157,7 @@ public class NotificationController {
 
         model.addAttribute("applicationReview", applicationReview);
 
-        return "/notification/applicant-review-detail";
+        return "notification/applicant-review-detail";
     }
     @GetMapping("/all")
     public String viewAllNotifications(

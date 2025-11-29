@@ -277,7 +277,19 @@ public class JobPostingServiceImpl implements JobPostingService {
         subDetails.incrementJobPostingsThisCycle();
         companyRepository.save(currentCompany);
 
-        // ✨ [NEW] Tăng chỉ số openJobs trong CompanyMetric
+     // ✨ [NEW] Tăng chỉ số openJobs trong CompanyMetric
+        if (currentCompany.getCompanyMetric() == null) {
+            // 1. Tạo mới bằng hàm vừa thêm
+            CompanyMetric newMetric = CompanyMetric.createDefault(currentCompany);
+
+            // 2. Gán vào company
+            currentCompany.setCompanyMetric(newMetric);
+
+            // 3. (Quan trọng) Nếu không có CascadeType.ALL, bạn phải save metric này trước
+            // companyMetricRepository.save(newMetric);
+        }
+
+// Giờ thì gọi incOpenJob() thoải mái
         currentCompany.getCompanyMetric().incOpenJob();
 
         //9. Bắn sự kiện để thông báo cho những người theo dõi công ty.

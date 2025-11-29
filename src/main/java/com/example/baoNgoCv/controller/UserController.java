@@ -97,7 +97,7 @@ public class UserController {
             }
         }
 
-        return "/user/login";
+        return "user/login";
     }
 
     @GetMapping("/register")

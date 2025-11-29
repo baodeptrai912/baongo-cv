@@ -99,14 +99,14 @@ public class JobseekerController {
             GetProfileResponse profileData = userService.getProfileData();
 
             model.addAttribute("profile", profileData);
-            return "/jobseeker/profile";
+            return "jobseeker/profile";
 
         } catch (UserNotFoundException e) {
             log.error("User not found in profile controller", e);
-            return "/status/404";
+            return "status/404";
         } catch (Exception e) {
             log.error("Error in profile controller", e);
-            return "/status/500";
+            return "status/500";
         }
     }
 
@@ -177,7 +177,7 @@ public class JobseekerController {
 
             model.addAttribute("response", dtoResponse);
 
-            return "/jobseeker/job-detail";
+            return "jobseeker/job-detail";
         } catch (RuntimeException e) {
             log.error("Error getting job detail for ID: {}", id, e);
             return "status/500";
@@ -191,7 +191,7 @@ public class JobseekerController {
 
             model.addAttribute("response", response);
 
-            return "/jobseeker/company-detail";
+            return "jobseeker/company-detail";
         } catch (RuntimeException e) {
             // [FIX] Ghi lại log lỗi để dễ dàng gỡ lỗi
             log.error("Error fetching company detail for ID: {}", id, e);
@@ -240,7 +240,7 @@ public class JobseekerController {
         GetMyApplicantResponse response = userService.getMyApplicants(currentUser, notiId, highlightId);
 
         model.addAttribute("response", response);
-        return "/jobseeker/my-application";
+        return "jobseeker/my-application";
     }
 
     /**
@@ -289,7 +289,7 @@ public class JobseekerController {
         model.addAttribute("applicantDetail", detailResponse);
         model.addAttribute("user", currentUser);
         // Giả sử bạn tạo một template mới để hiển thị chi tiết 1 hồ sơ duy nhất
-        return "/jobseeker/my-application-detail";
+        return "jobseeker/my-application-detail";
     }
 
     @GetMapping("/download/{fileName}")
@@ -372,7 +372,7 @@ public class JobseekerController {
             System.out.println("[DEBUG] UserDetails is null in accountSettingsPage. User might not be authenticated.");
 
         }
-        return "/jobseeker/account-settings";
+        return "jobseeker/account-settings";
     }
 
     /**
@@ -511,7 +511,7 @@ public class JobseekerController {
             GetJobSearchResponse response = GetJobSearchResponse.from(GetJobSearchRequest.withDefaults(), defaultJobs);
             model.addAttribute("searchResponse", response);
             model.addAttribute("errors", bindingResult.getAllErrors());
-            return "/jobseeker/job-search";
+            return "jobseeker/job-search";
         }
 
         //2. Check if user has provided any search criteria - kiểm tra có filter nào được áp dụng không
@@ -526,7 +526,7 @@ public class JobseekerController {
             Page<JobCardProjection> defaultJobs = jobPostingService.searchJobPostings(normalizedRequest);
             GetJobSearchResponse response = GetJobSearchResponse.from(normalizedRequest, defaultJobs);
             model.addAttribute("searchResponse", response);
-            return "/jobseeker/job-search";
+            return "jobseeker/job-search";
         }
 
         //5. Handle filtered search with criteria - thực hiện tìm kiếm với điều kiện filter
@@ -536,7 +536,7 @@ public class JobseekerController {
         model.addAttribute("searchResponse", response);
 
         //6. Return view template - trả về trang HTML với kết quả tìm kiếm
-        return "/jobseeker/job-search";
+        return "jobseeker/job-search";
     }
 
     @GetMapping("/job-search-api")

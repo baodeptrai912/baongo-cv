@@ -165,7 +165,7 @@ public class CompanyController {
 
         model.addAttribute("currentCompany", getProfileUpdateResponse);
 
-        return "/company/company-profile-update";
+        return "company/company-profile-update";
     }
 
     @PutMapping(value = "/information", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -210,7 +210,7 @@ public class CompanyController {
 
         model.addAttribute("company", company);
         model.addAttribute("industryList", industries);
-        return "/company/post-a-job";
+        return "company/post-a-job";
     }
 
     @GetMapping("/jobposting-managing")

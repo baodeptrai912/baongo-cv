@@ -103,7 +103,7 @@ public class UserController {
     @GetMapping("/register")
     public String register(Model model) {
 
-        return "/user/register";
+        return "user/register";
     }
 
     @GetMapping("/register/company")
@@ -124,7 +124,7 @@ public class UserController {
         }
 
         // 4. User chÆ°a Ä‘Äƒng nháº­p -> hiá»ƒn thá»‹ form forgot password
-        return "/user/forget-password";
+        return "user/forget-password";
     }
 
 
@@ -302,7 +302,7 @@ public class UserController {
             GetForgetPasswordFinalResponse pageData = passwordResetValidationService.createPasswordResetPageData(username, remainingMs);
 
             model.addAttribute("pageData", pageData);
-            return "/user/forget-password-final";
+            return "user/forget-password-final";
         } else {
             // Náº¿u session khĂ´ng há»£p lá»‡, chuyá»ƒn hÆ°á»›ng
             log.warn("Invalid or expired password reset session access attempt for user: {}", username);

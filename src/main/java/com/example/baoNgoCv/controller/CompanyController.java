@@ -101,7 +101,7 @@ public class CompanyController {
         GetCompaniesResponse response = companyService.getCompaniesData(page, sort, keyword, industry, location);
 
         model.addAttribute("data", response);
-        return "/main/company-list";
+        return "main/company-list";
     }
 
     @GetMapping("/api/companies")

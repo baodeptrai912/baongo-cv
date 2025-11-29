@@ -315,6 +315,66 @@
             80% { opacity: 0.8; }
             100% { bottom: 100%; opacity: 0; }
         }
+         /* --- MOBILE RESPONSIVE FIX (FINAL) --- */
+        @media (max-width: 991px) {
+            /* 1. Reset Body: Tắt flexbox, dùng kiểu hiển thị khối (block) bình thường */
+            html, body {
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+                display: block !important;
+                position: relative !important;
+            }
+
+            /* 2. ÉP BUỘC PHẦN GIỮA PHẢI HIỆN RA */
+            .main-wrapper {
+                display: block !important;
+                height: auto !important;
+                min-height: 60vh !important; /* Quan trọng: Ép nó phải cao ít nhất 60% màn hình */
+                flex: none !important;
+                overflow: visible !important;
+                margin-bottom: 20px !important;
+            }
+
+            /* 3. Mở rộng vùng cuộn bên trong */
+            .scroll-area {
+                height: auto !important;
+                overflow: visible !important;
+                padding-bottom: 0 !important;
+            }
+
+            /* 4. Đẩy Footer xuống cuối và cho phép nó chiếm không gian tự nhiên */
+            footer {
+                display: block !important;
+                position: relative !important;
+                height: auto !important;
+                margin-top: 30px !important;
+                width: 100% !important;
+                flex: none !important;
+            }
+
+            /* 5. Sửa bảng dữ liệu để vuốt ngang được */
+            .table-card {
+                overflow-x: auto !important;
+                display: block !important;
+                width: 100% !important;
+                border: 1px solid #eee; /* Thêm viền nhẹ để dễ nhìn */
+            }
+
+            /* 6. Fix lỗi thanh Nav Header bị dính */
+            .app-header {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1000 !important;
+            }
+
+            /* 7. Đảm bảo container không bị padding lạ */
+            .container {
+                padding-left: 15px !important;
+                padding-right: 15px !important;
+                max-width: 100% !important;
+            }
+        }
     </style>
 </head>
 <body>

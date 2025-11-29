@@ -75,5 +75,12 @@ public class CompanyMetric {
         return (openJobs * WEIGHT_OPEN_JOB)
                 + (interviews * WEIGHT_INTERVIEW)
                 + (followers * WEIGHT_FOLLOWER);
+    } public static CompanyMetric createDefault(Company company) {
+        return CompanyMetric.builder()
+                .company(company)
+                .openJobCount(0)
+                .totalInterviewCount(0)
+                .followerCount(0)
+                .build();
     }
 }
